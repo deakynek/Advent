@@ -1,0 +1,41 @@
+function PerformOperation ($array, $commandIndex)
+{
+
+	Write-Output $commandIndex
+	$command = $array[$commandIndex]
+	
+	if($command -eq "1")
+	{
+		$answer = [int]$array[$commandIndex+1] + [int]$array[$commandIndex+2]
+		$array[$commandIndex+3] = $answer.ToString();
+		Write-Output "Postition" ($commandIndex+3) "set to" ($array[$commandIndex+3])
+		return PerformOperation $array ($commandIndex +4)
+	}
+	elseif($command -eq "2")
+	{
+		$answer = [int]$array[$commandIndex+1] * [int]$array[$commandIndex+2]
+		$array[$commandIndex+3] = $answer.ToString();
+		
+		Write-Output "Postition" ($commandIndex+3) "set to" ($array[$commandIndex+3])
+		return PerformOperation $array ($commandIndex +4)
+	}
+	elseif($command -eq "99")
+	{
+		return $array
+	}
+	else
+	{
+		Write-Output "Incorrect Command.  Recieved:" $array[$commandIndex]
+		return @()
+	}
+
+}
+
+$file = Get-Content Advent2_input.txt
+$test = $file.Split(",")
+$test[1] = "12"
+$test[2] = "2"
+$test.GetType()
+$finalArray = PerformOperation $test 0
+
+Write-Output "Answer is :" $finalArray[0]

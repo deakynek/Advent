@@ -99,17 +99,19 @@ function PerformOperation
 		{	
 			Write-Host "OP1 InputType: " ($InputType[0]) -foregroundColor darkred
 		}
+		
+		$Operand1 = $Operand1Address
 		if($InputType[0] -eq "0")
 		{
 			while($Operand1Address -gt ($array.Count - 1))
 			{
 				$array += @("0")
 			}
-			$Operand1 = [long]$array[$Operand1Address]
-		}
-		elseif($InputType[0] -eq "1")
-		{
-			$Operand1 = $Operand1Address
+			
+			if($intComm -ne 3)
+			{
+				$Operand1 = [long]$array[$Operand1Address]
+			}
 		}
 		elseif($InputType[0] -eq "2")
 		{
@@ -118,13 +120,10 @@ function PerformOperation
 				$array += @("0")
 			}
 			
+			$Operand1 = [long]$array[$Operand1Address + $relativeBase.Value]
 			if($intComm -eq 3)
 			{
 				$Operand1 = $Operand1Address + $relativeBase.Value
-			}
-			else
-			{
-				$Operand1 = [long]$array[$Operand1Address + $relativeBase.Value]
 			}
 		}
 		
@@ -141,6 +140,7 @@ function PerformOperation
 		{	
 			Write-Host "OP2 InputType: " ($InputType[1]) -ForegroundColor darkred
 		}
+		
 		
 		if($InputType[1] -eq "0")
 		{
@@ -162,7 +162,6 @@ function PerformOperation
 				$array += @("0")
 			}
 			$Operand2 = [long]$array[$Operand2Address + $relativeBase.Value]
-	
 		}
 
 		if($ShowDebugMessages)
@@ -240,16 +239,15 @@ function PerformOperation
 		<#Get input, Either Engine Id or preceding Engines Output#>
         if($EngineSoftwares[$EngineArray[$EngineIndex]]["IdSet"])
         {
-			
+			$PrevEngineIndex = ($EngineIndex + $EngineArray.Count - 1) % ($EngineArray.Count)
             if($ShowDebugMessages)
             {
                 Write-Host "Inputing Last Output:" -ForegroundColor Cyan
-				$PrevEngineIndex = ($EngineIndex + $EngineArray.Count - 1)%($EngineArray.Count)
                 Write-Host "Output of Engine " $EngineArray[$PrevEngineIndex] "was" ($EngineSoftwares[$EngineArray[$PrevEngineIndex]]["Output"])
                 Write-Host "Output Index " $OutputIndex
             }
 			
-			$input = $Outputs[$EngineIndex].ToString()
+			$input = ($EngineSoftwares[$EngineArray[$PrevEngineIndex]]["Output"]).ToString()
 		}
         else
         {
@@ -267,7 +265,7 @@ function PerformOperation
 		
 		if($ShowDebugMessages)
 		{
-			Write-Host "Inputing "$input" to relativeBase address " ($Operand1) -ForegroundColor Cyan		
+			Write-Host "Inputing "$input" to address " ($Operand1) -ForegroundColor Cyan		
 		}
 		
 		$array[$Operand1]  = $input.ToString()
@@ -282,12 +280,12 @@ function PerformOperation
 			Write-Host  $Operand1 -foregroundcolor yellow
 		}
 		
-		$EngineSoftwares[$EngineArray[$OutputIndex]]["Output"]=  $Operand1
+		$EngineSoftwares[$EngineArray[$EngineIndex]]["Output"]=  $Operand1
 		$EngineSoftwares[$EngineArray[$EngineIndex]]["executeNextEngine"]=  $true
 		
 		if($ShowDebugMessages)
 		{
-			Write-Host "Feedback Index :"($nextIndexWhenFeedbackRecieved.Value)
+			Write-Host "Feedback Index :"($commandIndex.Value)
 		}
 	}
 	elseif($intComm -eq 5)
@@ -372,7 +370,10 @@ function PerformOperation
 		<#End script#>
 
 		$EngineSoftwares[$EngineArray[$EngineIndex]]["ScriptComplete"]=  $true
-		pause
+		if($withPauses)
+		{
+			pause
+		}
 	}
 	else
 	{

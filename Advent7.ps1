@@ -90,6 +90,7 @@ function PerformOperation
 	
 	if($command -eq 1)
 	{
+		<#Find Sum of Operand1 and Operand2, Store at Operand3Address#>
         if($debug)
         {
 		    Write-Host "Add" $Operand1 "and" $Operand2 -foregroundcolor red
@@ -105,6 +106,7 @@ function PerformOperation
 	}
 	elseif($command -eq 2)
 	{
+		<#Find Product of Operand1 and Operand2, Store at Operand3Address#>
         if($debug)
         {
 		    Write-Host "Multiply" $Operand1 "by" $Operand2 -foregroundcolor red
@@ -120,6 +122,7 @@ function PerformOperation
 	}
 	elseif($command -eq 3)
 	{
+		<#Get input, Either Engine Id or preceding Engines Output#>
         if($EngineSoftwares[$EngineArray[$EngineIndex]]["IdSet"])
         {
             if($debug)
@@ -151,26 +154,15 @@ function PerformOperation
 	}
 	elseif($command -eq 4)
 	{
-		if($immediateMode -and ($InputType[0] -eq "1"))
+		<#Ouput Operand 1 to OutputsArray, holding execution of this script until going#>
+		<#through all other Engines and returning to this one#>
+		if($debug)
 		{
-            if($debug)
-            {
-				Write-Host "Outputing Info" -foregroundcolor yellow
-			    Write-Host $Operand1Address -foregroundcolor yellow
-            }
-            $thisOutput = $Operand1Address
-		}
-		else
-		{
-            if($debug)
-            {
-				Write-Host "Outputing Info" -foregroundcolor yellow
-			    Write-Host $array[$Operand1Address] -foregroundcolor yellow
-            }
-            $thisOutput = $array[$Operand1Address]
+			Write-Host "Outputing Info" -foregroundcolor yellow
+			Write-Host $array[$Operand1Address] -foregroundcolor yellow
 		}
 		
-		$Outputs[$OutputIndex] = $thisOutput
+		$Outputs[$OutputIndex] = $Operand1
 	
         if($feedbackEnabled -ne $null -and $feedbackEnabled)
         {
@@ -186,6 +178,7 @@ function PerformOperation
 	}
 	elseif($command -eq 5)
 	{
+		<#If Operand 1 is equal to 0, Jump to index Operand2#>
 		if($Operand1 -ne 0)
 		{
             if($debug)
@@ -198,6 +191,7 @@ function PerformOperation
 	}
 	elseif($command -eq 6)
 	{
+		<#If Operand 1 equals 0, Jump to index Operand2#>
 		if($Operand1 -eq 0)
 		{
             if($debug)
@@ -209,6 +203,8 @@ function PerformOperation
 	}
 	elseif($command -eq 7)
 	{
+		<#If Operand 1 is less than Operand 2, Set 1 to Operand3Address#>
+		<#otherwise set 0 to Operand3Address#>
         if($debug)
         {
 		    Write-Host "Is" $Operand1 "less than" $Operand2 -foregroundcolor red
@@ -229,6 +225,8 @@ function PerformOperation
 	}
 	elseif($command -eq 8)
 	{
+		<#If Operand 1 is equal to Operand 2, Set 1 to Operand3Address#>
+		<#otherwise set 0 to Operand3Address#>
         if($debug)
         {
 		    Write-Host "Is" $Operand1 "equal to" $Operand2 -foregroundcolor red
@@ -249,6 +247,7 @@ function PerformOperation
 	}
 	elseif($command -eq 99)
 	{
+		<#End script#>
         if($feedbackEnabled -ne $null -and $feedbackEnabled)
         {
 		    $nextIndexWhenFeedbackRecieved.value = 0

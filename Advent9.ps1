@@ -9,13 +9,7 @@ function PerformOperation
 		[String[]] $array,
 		
 		[Parameter(Mandatory=$true)]
-		[long] $commandIndex,
-
-        [Parameter(Mandatory=$true)]
-		[bool] $feedbackEnabled,
-
-        [Parameter(Mandatory=$true)]
-		[ref] $nextIndexWhenFeedbackRecieved,
+		[ref] $commandIndex,
 
         [Parameter(Mandatory=$true)]
 		[ref] $relativeBase
@@ -23,26 +17,25 @@ function PerformOperation
 		
 	<#Set up variables, and default operands #>
 	$UnchangedInputArray = $array
-	$command = $array[$commandIndex]
+	$command = $array[$commandIndex.Value]
 	if($ShowDebugMessages)
 	{
 		Write-Host "Command" $command -foregroundcolor blue -nonewline
 	}
 	
-	while($commandIndex+3 -gt ($array.Count - 1))
+	while($commandIndex.Value+3 -gt ($array.Count - 1))
 	{
 		$array += "0"
 	}
-	$Operand1Address = [long]$array[$commandIndex+1]
-	$Operand2Address = [long]$array[$commandIndex+2]
-	$Operand3Address = [long]$array[$commandIndex+3]
+	$Operand1Address = [long]$array[$commandIndex.Value+1]
+	$Operand2Address = [long]$array[$commandIndex.Value+2]
+	$Operand3Address = [long]$array[$commandIndex.Value+3]
 
 	
 	$OperandCount = 0
 	$InputType = @()
 	if($command.Length -gt 2)
 	{
-		$specialMode = $true
 		<#New Command Type#>
 		$comm = $command.Substring($command.Length-2,2)
 		
@@ -60,7 +53,7 @@ function PerformOperation
 		$OperandCount = 1
 		if($ShowDebugMessages)
 		{	
-			Write-Host " "$array[$commandIndex+1] -foregroundcolor blue
+			Write-Host " "$array[$commandIndex.Value+1] -foregroundcolor blue
 		}
 	}
 	elseif(($intComm -eq 5) -or ($intComm -eq 6))
@@ -68,7 +61,7 @@ function PerformOperation
 		$OperandCount = 2
 		if($ShowDebugMessages)
 		{	
-			Write-Host " "$array[$commandIndex+1] $array[$commandIndex+2] -foregroundcolor blue
+			Write-Host " "$array[$commandIndex.Value+1] $array[$commandIndex.Value+2] -foregroundcolor blue
 		}			
 	}
 	elseif(($intComm -eq 1) -or ($intComm -eq 2) -or ($intComm -eq 7) -or ($intComm -eq 8))
@@ -76,7 +69,7 @@ function PerformOperation
 		$OperandCount = 3
 		if($ShowDebugMessages)
 		{	
-			Write-Host " "$array[$commandIndex+1] $array[$commandIndex+2] $array[$commandIndex+3] -foregroundcolor blue 
+			Write-Host " "$array[$commandIndex.Value+1] $array[$commandIndex.Value+2] $array[$commandIndex.Value+3] -foregroundcolor blue 
 		}
 	}
 	elseif($ShowDebugMessages)
@@ -84,28 +77,24 @@ function PerformOperation
 		Write-Host""
 	}
 		
-	if($specialMode)
+
+	for($i = 1; $i -le $OperandCount; $i++)
 	{
-		for($i = 1; $i -le $OperandCount; $i++)
+		$index = ($command.Length - 2 - $i)
+		if($index -ge 0)
 		{
-			$index = ($command.Length - 2 - $i)
-			if($index -ge 0)
-			{
-				$temp = $command[$index]
-				$InputType += $temp
-			}
-			else
-			{
-				$InputType += 0
-			}
+			$temp = $command[$index]
+			$InputType += $temp
+		}
+		else
+		{
+			$InputType += 0
 		}
 	}
-	$command = $intComm	
 	
-	
-	if($specialMode -and ($InputType.Count -gt 0))
+	<#Set Operand 1 based on type#>
+	if($InputType.Count -gt 0)
 	{
-	
 		if($ShowDebugMessages)
 		{	
 			Write-Host "OP1 InputType: " ($InputType[0]) -foregroundColor darkred
@@ -128,28 +117,26 @@ function PerformOperation
 			{
 				$array += @("0")
 			}
-			$Operand1 = [long]$array[$Operand1Address + $relativeBase.Value]
+			
+			if($intComm -eq 3)
+			{
+				$Operand1 = $Operand1Address + $relativeBase.Value
+			}
+			else
+			{
+				$Operand1 = [long]$array[$Operand1Address + $relativeBase.Value]
+			}
 		}
 		
-
-	}
-	elseif(!$specialMode)
-	{
-		while($Operand1Address -gt ($array.Count - 1))
-		{
-			$array += @("0")
-		}	
-		$Operand1 = [long]$array[$Operand1Address]
-	}
-	if($ShowDebugMessages)
-	{	
-		Write-Host "Op 1: "$Operand1
+		if($ShowDebugMessages)
+		{	
+			Write-Host "Op 1: "$Operand1
+		}
 	}	
 	
 	
-	if($specialMode -and ($InputType.Count -gt 1))
+	if($InputType.Count -gt 1)
 	{
-		
 		if($ShowDebugMessages)
 		{	
 			Write-Host "OP2 InputType: " ($InputType[1]) -ForegroundColor darkred
@@ -183,22 +170,8 @@ function PerformOperation
 			Write-Host "Op 2: "$Operand2
 		}
 	}
-	elseif(!$specialMode -and $OperandCount -gt 1)
-	{
-		while($Operand2Address -gt ($array.Count - 1))
-		{
-			$array += @("0")
-		}	
-		$Operand2 = [long]$array[$Operand2Address]
-		
-
-		if($ShowDebugMessages)
-		{	
-			Write-Host "Op 2: "$Operand2
-		}
-	}	
 	
-	if($specialMode -and ($InputType.Count -gt 2))
+	if($InputType.Count -gt 2)
 	{
 		if($debug)
 		{
@@ -221,22 +194,16 @@ function PerformOperation
 			$Operand3Address += $relativeBase.Value
 		}
 	}
-	elseif(!$specialMode -and $OperandCount -gt 1)
-	{
-		while($Operand3Address -gt ($array.Count - 1))
-		{
-			$array += @("0")
-		}	
-	}
 	if($debug)
 	{
 		Write-Host "Op 3 Address : "$Operand3Address
 	}
 	
-	$OutputIndex = (($EngineIndex+1) % ($Outputs.Count))
-	$nextCommandIndex = $commandIndex + $OperandCount + 1
+	$OutputIndex = (($EngineIndex+1) % ($EngineArray.Count))
+	$commandIndex.Value= $commandIndex.Value + $OperandCount + 1
 	
-	if($command -eq 1)
+	
+	if($intComm -eq 1)
 	{
 		<#Find Sum of Operand1 and Operand2, Store at Operand3Address#>
         if($ShowDebugMessages)
@@ -249,10 +216,10 @@ function PerformOperation
 		
         if($ShowDebugMessages)
         {
-		    Write-Host "Postition" $Operand3Address "set to" $answer
+		    Write-Host "Position" $Operand3Address "set to" $answer
         }
 	}
-	elseif($command -eq 2)
+	elseif($intComm -eq 2)
 	{
 		<#Find Product of Operand1 and Operand2, Store at Operand3Address#>
         if($ShowDebugMessages)
@@ -265,10 +232,10 @@ function PerformOperation
 		
         if($ShowDebugMessages)
         {
-		    Write-Host "Postition" $Operand3Address "set to" $answer
+		    Write-Host "Position" $Operand3Address "set to" $answer
         }
 	}
-	elseif($command -eq 3)
+	elseif($intComm -eq 3)
 	{
 		<#Get input, Either Engine Id or preceding Engines Output#>
         if($EngineSoftwares[$EngineArray[$EngineIndex]]["IdSet"])
@@ -277,7 +244,8 @@ function PerformOperation
             if($ShowDebugMessages)
             {
                 Write-Host "Inputing Last Output:" -ForegroundColor Cyan
-                Write-Host "Output Array " $Outputs
+				$PrevEngineIndex = ($EngineIndex + $EngineArray.Count - 1)%($EngineArray.Count)
+                Write-Host "Output of Engine " $EngineArray[$PrevEngineIndex] "was" ($EngineSoftwares[$EngineArray[$PrevEngineIndex]]["Output"])
                 Write-Host "Output Index " $OutputIndex
             }
 			
@@ -296,62 +264,33 @@ function PerformOperation
 			$EngineSoftwares[$EngineArray[$EngineIndex]]["IdSet"]= $true
         }
 
-		$InputAddress = $Operand1Address
 		
 		if($ShowDebugMessages)
 		{
-			Write-Host "Operand 1 Address = " $Operand1Address
-		}
-		if($specialMode -and ($InputType[0]-eq "2"))
-		{
-			
-			
-			$InputAddress +=  $relativeBase.Value
-			if($ShowDebugMessages)
-            {
-				Write-Host "Relative Base Address = " $relativeBase.Value
-				Write-Host "Inputing "$input" to relativeBase address " ($InputAddress) -ForegroundColor Cyan
-				Write-Host "Input Address = " $InputAddress
-			}
-			
-			
-			$array[$InputAddress] = $input.ToString()
-		}
-		else
-		{
-			if($ShowDebugMessages)
-            {
-				Write-Host "Inputing "$input" to address " ($Operand1) -ForegroundColor Cyan			
-			}
+			Write-Host "Inputing "$input" to relativeBase address " ($Operand1) -ForegroundColor Cyan		
 		}
 		
-		$array[$InputAddress]  = $input.ToString()
+		$array[$Operand1]  = $input.ToString()
 	}
-	elseif($command -eq 4)
+	elseif($intComm -eq 4)
 	{
 		<#Ouput Operand 1 to OutputsArray, holding execution of this script until going#>
 		<#through all other Engines and returning to this one#>
 		if($ShowDebugMessages -or $writeOutput)
 		{
-			Write-Host "Outputing Info" -foregroundcolor yellow
+			Write-Host "Outputting Info" -foregroundcolor yellow
 			Write-Host  $Operand1 -foregroundcolor yellow
 		}
 		
-		$Outputs[$OutputIndex] = $Operand1
-	
-        if($feedbackEnabled -ne $null -and $feedbackEnabled)
-        {
-
-            $nextIndexWhenFeedbackRecieved.Value = ($commandIndex +2)
-            if($ShowDebugMessages)
-            {
-                Write-Host "Feedback Index :"($nextIndexWhenFeedbackRecieved.Value)
-            }
-            return $array
-        }
-
+		$EngineSoftwares[$EngineArray[$OutputIndex]]["Output"]=  $Operand1
+		$EngineSoftwares[$EngineArray[$EngineIndex]]["executeNextEngine"]=  $true
+		
+		if($ShowDebugMessages)
+		{
+			Write-Host "Feedback Index :"($nextIndexWhenFeedbackRecieved.Value)
+		}
 	}
-	elseif($command -eq 5)
+	elseif($intComm -eq 5)
 	{
 		<#If Operand 1 is equal to 0, Jump to index Operand2#>
 		if($Operand1 -ne 0)
@@ -361,10 +300,10 @@ function PerformOperation
 			    Write-Host "Jump to index" $Operand2 -foregroundcolor red
             }
 			
-			$nextCommandIndex = $Operand2
+			$commandIndex.Value = $Operand2
 		}
 	}
-	elseif($command -eq 6)
+	elseif($intComm -eq 6)
 	{
 		<#If Operand 1 equals 0, Jump to index Operand2#>
 		if($Operand1 -eq 0)
@@ -373,10 +312,10 @@ function PerformOperation
             {
 			    Write-Host "Jumping to index " $Operand2
             }
-			$nextCommandIndex = $Operand2
+			$commandIndex.Value = $Operand2
 		}
 	}
-	elseif($command -eq 7)
+	elseif($intComm -eq 7)
 	{
 		<#If Operand 1 is less than Operand 2, Set 1 to Operand3Address#>
 		<#otherwise set 0 to Operand3Address#>
@@ -398,7 +337,7 @@ function PerformOperation
 		`	Write-Host "Postition" $Operand3Address "set to" $array[$Operand3Address]
         }
 	}
-	elseif($command -eq 8)
+	elseif($intComm -eq 8)
 	{
 		<#If Operand 1 is equal to Operand 2, Set 1 to Operand3Address#>
 		<#otherwise set 0 to Operand3Address#>
@@ -420,7 +359,7 @@ function PerformOperation
 		    Write-Host "Postition" $Operand3Address "set to" $array[$Operand3Address];
         }
 	}
-	elseif($command -eq 9)
+	elseif($intComm -eq 9)
 	{
         if($ShowDebugMessages)
         {
@@ -428,65 +367,45 @@ function PerformOperation
         }	
 		$relativeBase.Value = $relativeBase.Value + $Operand1
 	}
-	elseif($command -eq 99)
+	elseif($intComm -eq 99)
 	{
 		<#End script#>
 
-		$nextIndexWhenFeedbackRecieved.value = 0
+		$EngineSoftwares[$EngineArray[$EngineIndex]]["ScriptComplete"]=  $true
 		pause
-		return $array
 	}
 	else
 	{
-		Write-Host "Incorrect Command.  Recieved:" $command
+		Write-Host "Incorrect Command.  Received:" $intComm "of type" ($intComm.GetType())
+		$EngineSoftwares[$EngineArray[$EngineIndex]]["ScriptComplete"] = $true
 		return @()
 	}
-	
-	try{
-	return PerformOperation -array $array `
-							-commandIndex $nextCommandIndex `
-							-feedbackEnabled $feedbackEnabled `
-							-nextIndexWhenFeedbackRecieved $nextIndexWhenFeedbackRecieved `
-							-relativeBase $relativeBase
-	}
-	catch{
-			
-			if($ShowDebugMessages)
-			{
-				Write-Host "OVERLOAD OVERLOAD" -foregroundColor RED
-				Write-Host "Trying to run operation" $nextCommandIndex
-				Write-Host "With Relative Base" $relativeBase.value
-			}
-			
-			
-			$nextIndexWhenFeedbackRecieved.Value = $nextCommandIndex
-			return $UnchangedInputArray
-			
-	}
+	return $array
 }
 
 $file = Get-Content Advent9_input.txt
-$Outputs =@(0,1)
-$EngineArray = @(2)
+$Outputs =@(0,0)
+$EngineArray = @(1)
 $EngineIndex = 0
 $EngineSoftwares = @{}
-$EngineSoftwares[2] = @{"IdSet" = $false; "array"= @(); "index" = @()}
+$EngineSoftwares[$EngineArray[0]] = @{"IdSet" = $false; "array"= $file.Split(","); "index" = 0; "relativeBase" = 0; "Output"=0; "ScriptComplete" = $false; "executeNextEngine" = $false}
 
-$nextIndex = ([ref](0))
-$thisIndex = 0
-$relativeBase = ([ref](0))
+
 $oppArray = $file.Split(",")
 
 do
 {
-	$thisIndex = $nextIndex.Value
+	$IndexReference = ([ref]($EngineSoftwares[$EngineArray[0]]["index"]))
+	$BaseReference = ([ref]($EngineSoftwares[$EngineArray[0]]["relativeBase"]))
 	
-	$oppArray = PerformOperation -array $oppArray `
-							-commandIndex $thisIndex `
-							-feedbackEnabled $false `
-							-nextIndexWhenFeedbackRecieved $nextIndex `
-							-relativeBase $relativeBase
+	$EngineSoftwares[$EngineArray[0]]["array"] = PerformOperation 	-array $EngineSoftwares[$EngineArray[0]]["array"] `
+																	-commandIndex $IndexReference `
+																	-relativeBase $BaseReference
+																	
+	
+	$EngineSoftwares[$EngineArray[0]]["index"] = $IndexReference.Value				
+	$EngineSoftwares[$EngineArray[0]]["relativeBase"] = $BaseReference.Value
 }
-while($nextIndex.Value -ne 0)
+while($EngineSoftwares[$EngineArray[0]]["ScriptComplete"] -ne $true)
 						
-Write-Host "Output " $Outputs
+Write-Host "Output " $EngineSoftwares[$EngineArray[0]]["Output"]

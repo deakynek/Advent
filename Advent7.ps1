@@ -274,7 +274,7 @@ $EngineIdList = [System.Collections.ArrayList](0..4)
 $EngineSoftwares =@{}
 foreach($id in $EngineIdList)
 {
-    $EngineSoftwares[$id] = @{"IdSet" = $false; "array"= @(); "index" = @()}
+    $EngineSoftwares[$id] = @{"IdSet" = $false; "array"= @(); "index" = 0}
 }
 
 $maxout = 0
@@ -325,7 +325,7 @@ $EngineIdList = [System.Collections.ArrayList](5..9)
 $EngineSoftwares =@{}
 foreach($id in $EngineIdList)
 {
-    $EngineSoftwares[$id] = @{"IdSet" = $false; "array"= @(); "index" = @()}
+    $EngineSoftwares[$id] = @{"IdSet" = $false; "array"= @(); "index" = 0}
 }
 
 $maxout = 0

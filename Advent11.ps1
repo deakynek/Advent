@@ -1,5 +1,6 @@
-$ShowDebugMessages = $FALSE
+$ShowDebugMessages = $false
 $writeOutput = $false
+$ShowJumps = $false
 
 
 function PerformOperation
@@ -20,6 +21,7 @@ function PerformOperation
 	$command = $array[$commandIndex.Value]
 	if($ShowDebugMessages)
 	{
+		Write-Host "`n`nInput Index = " ($commandIndex.Value) -foregroundColor darkGreen
 		Write-Host "Command" $command -foregroundcolor blue -nonewline
 	}
 	
@@ -47,6 +49,7 @@ function PerformOperation
 		$intComm = [long]$command
 	}
 	
+		
 	
 	if(($intComm -eq 3) -or ($intComm -eq 4) -or ($intComm -eq 9))
 	{
@@ -77,7 +80,11 @@ function PerformOperation
 		Write-Host""
 	}
 		
-
+	if($ShowDebugMessages)
+	{	
+		Write-Host "IntComm = " $intComm "`t" -ForegroundColor green
+	}
+	
 	for($i = 1; $i -le $OperandCount; $i++)
 	{
 		$index = ($command.Length - 2 - $i)
@@ -172,7 +179,7 @@ function PerformOperation
 	
 	if($InputType.Count -gt 2)
 	{
-		if($debug)
+		if($ShowDebugMessages)
 		{
 			Write-Host "OP3 InputType: " ($InputType[2]) -ForegroundColor darkred
 		}
@@ -192,11 +199,13 @@ function PerformOperation
 			}
 			$Operand3Address += $relativeBase.Value
 		}
+		
+		if($ShowDebugMessages)
+		{
+			Write-Host "Op 3 Address : "$Operand3Address -ForegroundColor darkred
+		}
 	}
-	if($debug)
-	{
-		Write-Host "Op 3 Address : "$Operand3Address
-	}
+	
 	
 	$OutputIndex = (($EngineIndex+1) % ($EngineArray.Count))
 	$commandIndex.Value= $commandIndex.Value + $OperandCount + 1
@@ -290,12 +299,16 @@ function PerformOperation
 	}
 	elseif($intComm -eq 5)
 	{
-		<#If Operand 1 is equal to 0, Jump to index Operand2#>
+		if($ShowDebugMessages)
+        {
+		    Write-Host "Is" $Operand1 "not equal to 0" -foregroundcolor red
+        }
+		<#If Operand 1 is not equal to 0, Jump to index Operand2#>
 		if($Operand1 -ne 0)
 		{
             if($ShowDebugMessages)
             {
-			    Write-Host "Jump to index" $Operand2 -foregroundcolor red
+			    Write-Host "`tJump to index" $Operand2 -foregroundcolor red
             }
 			
 			$commandIndex.Value = $Operand2
@@ -303,12 +316,16 @@ function PerformOperation
 	}
 	elseif($intComm -eq 6)
 	{
+		if($ShowDebugMessages)
+        {
+		    Write-Host "Is" $Operand1 "equal to 0" -foregroundcolor red
+        }
 		<#If Operand 1 equals 0, Jump to index Operand2#>
 		if($Operand1 -eq 0)
 		{
             if($ShowDebugMessages)
             {
-			    Write-Host "Jumping to index " $Operand2
+			    Write-Host "`tJumping to index " $Operand2
             }
 			$commandIndex.Value = $Operand2
 		}
@@ -317,7 +334,7 @@ function PerformOperation
 	{
 		<#If Operand 1 is less than Operand 2, Set 1 to Operand3Address#>
 		<#otherwise set 0 to Operand3Address#>
-        if($ShowDebugMessages)
+        if($ShowDebugMessages -or $ShowJumps)
         {
 		    Write-Host "Is" $Operand1 "less than" $Operand2 -foregroundcolor red
         }
@@ -330,9 +347,9 @@ function PerformOperation
 			$array[$Operand3Address] = "0";
 		}
 		
-        if($ShowDebugMessages)
+        if($ShowDebugMessages -or $ShowJumps)
         {
-		`	Write-Host "Postition" $Operand3Address "set to" $array[$Operand3Address]
+		`	Write-Host "`tPosition" $Operand3Address "set to" $array[$Operand3Address]
         }
 	}
 	elseif($intComm -eq 8)
@@ -354,7 +371,7 @@ function PerformOperation
 
 		if($ShowDebugMessages)
         {
-		    Write-Host "Postition" $Operand3Address "set to" $array[$Operand3Address];
+		    Write-Host "`tPosition" $Operand3Address "set to" $array[$Operand3Address];
         }
 	}
 	elseif($intComm -eq 9)
@@ -381,21 +398,55 @@ function PerformOperation
 		$EngineSoftwares[$EngineArray[$EngineIndex]]["ScriptComplete"] = $true
 		return @()
 	}
+	
+	if($ShowDebugMessages)
+	{
+		Write-Host "Output Index = " ($commandIndex.Value) -foregroundColor darkGreen
+	}
 	return $array
+}
+
+function HasPointBeenPainted
+{
+	Param(
+		[Parameter(Mandatory=$true)]
+		[int] $x,
+		
+		[Parameter(Mandatory=$true)]
+		[int] $y
+		)
+		
+	for ($i = 0; $i -lt $Points["X"].Count; $i++)
+	{
+		if($Points["X"][$i] -ne $x)
+		{
+			continue
+		}
+		elseif($Points["Y"][$i] -ne $y)
+		{
+			continue
+		}
+		else
+		{
+			return $i
+		}
+	}
+	
+	return $null
 }
 
 
 
 $file = Get-Content Advent11_input.txt
 $Outputs =@(0,0)
-$EngineArray = @(0)
+$EngineArray = @(1)
 $EngineIndex = 0
 $EngineSoftwares = @{}
 $EngineSoftwares[$EngineArray[0]] = @{"IdSet" = $false; "array"= $file.Split(","); "index" = 0; "relativeBase" = 0; "Output"=0; "ScriptComplete" = $false; "executeNextEngine" = $false}
 
 
 Write-Host "Engine Array " $EngineArray
-$FirstOutput = $false
+$FirstOutput = $true
 $CurrentPosititon = @(0,0)
 $Facing = 0
 $DirectionCount = 4
@@ -403,6 +454,13 @@ $DirectionCount = 4
 $Points = @{"X"=@(); "Y"=@()}
 $C = @()
 $HighestIndex = 0
+
+$debugNewCode = $false
+$Loops = 0
+$CheckLoopCount = 10000
+$firstTime = $false
+$JumpCount = 100
+$Jumps = 0
 
 do
 {
@@ -430,21 +488,42 @@ do
 		if($EngineSoftwares[$engine]["index"] -gt $HighestIndex)
 		{
 			$HighestIndex =  $EngineSoftwares[$engine]["index"]
-			Write-Host "HighestIndex " $HighestIndex -foregroundColor cyan
+			if($debugNewCode)
+			{
+				Write-Host "HighestIndex " $HighestIndex -foregroundColor cyan
+			}
+			$Jumps = 0
+		}
+		elseif(($EngineSoftwares[$engine]["index"] -eq $HighestIndex))
+		{
+			if(!$ShowJumps -and $Jumps%$JumpCount -eq 0)
+			{
+				$ShowJumps = $true
+				
+				Write-Host "Points = " $Points["X"].Count
+			}
+			else
+			{
+				$ShowJumps = $false
+			}
+			
+			$Jumps++
 		}
 		
-		if($FirstOutput -eq $false -and $EngineSoftwares[$engine]["executeNextEngine"])
+		
+		
+		if($FirstOutput -and $EngineSoftwares[$engine]["executeNextEngine"])
 		{
-			$FirstOutput = $true
+			$FirstOutput = $false
 			$PaintThisColor = $EngineSoftwares[$engine]["Output"]
 			
-			$TestPointWasPainted = (0..($Points["X"].Count-1)) | Where-Object{$Points["X"][$_] -eq $CurrentPosititon[0] -and $Points["Y"][$_] -eq $CurrentPosititon[1]}
+			$TestPointWasPainted = HasPointBeenPainted -x  ($CurrentPosititon[0])  -y  ($CurrentPosititon[1])
 			
-			if($PaintThisColor -eq 0)
+			if($PaintThisColor -eq 0 -and $debugNewCode)
 			{
 				Write-Host "`tPaint Black"
 			}
-			elseif($PaintThisColor -eq 1)
+			elseif($PaintThisColor -eq 1 -and $debugNewCode)
 			{
 				Write-Host "`tPaint White"
 			}
@@ -464,76 +543,236 @@ do
 		}
 		elseif($EngineSoftwares[$engine]["executeNextEngine"])
 		{
-			$FirstOutput = $false
+			$FirstOutput = $true
 			$MoveToThisSpace = $EngineSoftwares[$engine]["Output"]
 
-			if($MoveToThisSpace -eq 0)
+			if($MoveToThisSpace -eq 1)
 			{
-				Write-Host "Turn right"
+				if($debugNewCode)
+				{
+					Write-Host "Turn right"
+				}
 				$Facing = ($Facing + 1)% 4
 			}
-			elseif($MoveToThisSpace -eq 1)
+			elseif($MoveToThisSpace -eq 0)
 			{
-				Write-Host "Turn left"
+				if($debugNewCode)
+				{
+					Write-Host "Turn left"
+				}
 				
 				$Facing = ($Facing+4 - 1) %4
 			}
 			
 			if($Facing -eq 0)
 			{
-				Write-Host "Go up"
+				if($debugNewCode)
+				{
+					Write-Host "Go up"
+				}
 				$CurrentPosititon[1] = $CurrentPosititon[1] + 1
 			}
 			elseif($Facing -eq 1)
 			{
-				Write-Host "Go right"
+				if($debugNewCode)
+				{
+					Write-Host "Go right"
+				}
 				$CurrentPosititon[0] = $CurrentPosititon[0] + 1
 			}
 			elseif($Facing -eq 2)
 			{
-				Write-Host "Go down"
+				if($debugNewCode)
+				{
+					Write-Host "Go down"
+				}
 				$CurrentPosititon[1] = $CurrentPosititon[1] - 1
 			}
 			elseif($Facing -eq 3)
 			{
-				Write-Host "Go left"
+				if($debugNewCode)
+				{
+					Write-Host "Go left"
+				}
 				$CurrentPosititon[0] = $CurrentPosititon[0] - 1
 			}
 			else
 			{
-				Write-Host "NULL NULL NULL NULL NULL NULL  - Facing was" $Facing 
+				if($debugNewCode)
+				{
+					Write-Host "NULL NULL NULL NULL NULL NULL  - Facing was" $Facing 
+				}
 			}
 			
-			Write-Host "Going to Point  ("$CurrentPosititon[0]","$CurrentPosititon[1]")" -nonewline
-			
-			$TestPointWasPainted = (0..($Points["X"].Count-1)) | Where-Object{$Points["X"][$_] -eq $CurrentPosititon[0] -and $Points["Y"][$_] -eq $CurrentPosititon[1]}			
-			if($TestPointWasPainted -eq $null)
+			$TestPointWasPainted =  HasPointBeenPainted -x  ($CurrentPosititon[0])  -y  ($CurrentPosititon[1])
+		}
+		
+		if($debugNewCode)
+		{
+			if($FirstOutput)
 			{
-				Write-Host "`t-- BLACK"
-				$EngineSoftwares[$engine]["Output"] = 0
+				Write-Host "Going to Point  ("$CurrentPosititon[0]","$CurrentPosititon[1]")" -nonewline
 			}
 			else
 			{
-				if($C[$TestPointWasPainted[0]] -eq 0)
-				{
-					Write-Host "`t-- BLACK"
-				}
-				elseif ($C[$TestPointWasPainted[0]] -eq 1)
-				{
-					Write-Host "`t-- WHITE"
-				}
-				else
-				{
-					Write-Host "`t-- NULL NULL NULL NULL"
-				
-				}
-			
-                $EngineSoftwares[$engine]["Output"] = $C[$TestPointWasPainted[0]]
+				Write-Host "Painting Point ("$CurrentPosititon[0]","$CurrentPosititon[1]")" -nonewline
 			}
 		}
+		
+		if($TestPointWasPainted -eq $null)
+		{
+			
+			if($debugNewCode)
+			{
+				Write-Host "`t-- BLACK"
+			}
+			$EngineSoftwares[$engine]["Output"] = 0
+		}
+		else
+		{
+			if($C[$TestPointWasPainted[0]] -eq 0 -and ($debugNewCode))
+			{
+				Write-Host "`t-- BLACK"
+			}
+			elseif ($C[$TestPointWasPainted[0]] -eq 1 -and ($debugNewCode))
+			{
+				Write-Host "`t-- WHITE"
+			}
+			elseif ($debugNewCode)
+			{
+				Write-Host "`t-- NULL NULL NULL NULL"
+			
+			}
+		
+			$EngineSoftwares[$engine]["Output"] = $C[$TestPointWasPainted[0]]
+		}		
+		
+		if($FirstOutput -eq $false -and $Loops % $CheckLoopCount -eq 0)
+		{
+			
+			$xPoints = $Points["X"]
+			$yPoints = $Points["Y"]
+			
+			$TestPointWasPainted =  HasPointBeenPainted -x  ($CurrentPosititon[0])  -y  ($CurrentPosititon[1])
+			if($TestPointWasPainted -eq $null)
+			{
+				$xPoints += $CurrentPosititon[0]
+				$yPoints += $CurrentPosititon[1]
+			}
+			
+			$xRange = $xPoints | Measure-Object -maximum -minimum
+			$yRange = $yPoints | Measure-Object -maximum -minimum
+			
+			for($y = $yRange.maximum; $y -ge $yRange.minimum; $y--)
+			{
+				Write-Host ""
+				for($x = $xRange.minimum; $x -le $xRange.maximum; $x++)
+				{
+					$TestPointWasPainted =  HasPointBeenPainted -x  $x  -y  $y
+					if($x -eq $CurrentPosititon[0] -and $y -eq $CurrentPosititon[1])
+					{
+						if($Facing -eq 0)
+						{
+							Write-Host "^" -foregroundColor yellow -nonewline
+						}
+						elseif($Facing -eq 1)
+						{
+							Write-Host ">" -foregroundColor yellow -nonewline
+						}
+						elseif($Facing -eq 2)
+						{
+							Write-Host "V" -foregroundColor yellow -nonewline
+						}
+						elseif($Facing -eq 3)
+						{
+							Write-Host "<" -foregroundColor yellow -nonewline
+						}
+					}
+					elseif($x -eq 0 -and $y -eq 0)
+					{
+						Write-Host "0" -foregroundColor cyan -nonewline
+					}
+					elseif($TestPointWasPainted -ne $null -and $C[$TestPointWasPainted[0]] -eq 1)
+					{
+						Write-Host "0" -foregroundColor white -nonewline
+					}
+					else
+					{
+						Write-Host "0" -foregroundColor black -nonewline
+					}
+				}
+			}
+			
+			Write-Host "`n`n"
+			pause
+		}
+		
+		if($Loops % $CheckLoopCount -eq 0)
+		{
+			Write-Host "Loop Count =" $loops " - HighestIndex= " $HighestIndex
+		}
+		
+		
+	$Loops++
+}while($EngineSoftwares[$EngineArray[0]]["ScriptComplete"] -eq $false )
 
 
-}while($EngineSoftwares[0]["ScriptComplete"] -eq $false )
 
-WriteHost "Total Points" ($C.Count)
+
+	
+$xPoints = $Points["X"]
+$yPoints = $Points["Y"]
+
+$TestPointWasPainted = HasPointBeenPainted -x  ($CurrentPosititon[0])  -y  ($CurrentPosititon[1])
+if($TestPointWasPainted -eq $null)
+{
+	$xPoints += $CurrentPosititon[0]
+	$yPoints += $CurrentPosititon[1]
+}
+
+$xRange = $xPoints | Measure-Object -maximum -minimum
+$yRange = $yPoints | Measure-Object -maximum -minimum
+
+for($y = $yRange.maximum; $y -ge $yRange.minimum; $y--)
+{
+	Write-Host ""
+	for($x = $xRange.minimum; $x -le $xRange.maximum; $x++)
+	{
+		$TestPointWasPainted = HasPointBeenPainted -x  $x -y  $y
+		if($x -eq $CurrentPosititon[0] -and $y -eq $CurrentPosititon[1])
+		{
+			if($Facing -eq 0)
+			{
+				Write-Host "^" -foregroundColor yellow -nonewline
+			}
+			elseif($Facing -eq 1)
+			{
+				Write-Host ">" -foregroundColor yellow -nonewline
+			}
+			elseif($Facing -eq 2)
+			{
+				Write-Host "V" -foregroundColor yellow -nonewline
+			}
+			elseif($Facing -eq 3)
+			{
+				Write-Host "<" -foregroundColor yellow -nonewline
+			}
+		}
+		elseif($x -eq 0 -and $y -eq 0)
+		{
+			Write-Host "0" -foregroundColor cyan -nonewline
+		}
+		elseif($TestPointWasPainted -ne $null -and $C[$TestPointWasPainted[0]] -eq 1)
+		{
+			Write-Host "0" -foregroundColor white -nonewline
+		}
+		else
+		{
+			Write-Host "0" -foregroundColor black -nonewline
+		}
+	}
+}
+
+
+Write-Host "Total Points" ($C.Count)
 

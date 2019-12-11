@@ -1,4 +1,4 @@
-$ShowDebugMessages = $true
+$ShowDebugMessages = $FALSE
 $writeOutput = $false
 
 
@@ -240,7 +240,7 @@ function PerformOperation
         if($EngineSoftwares[$EngineArray[$EngineIndex]]["IdSet"])
         {
 			$PrevEngineIndex = ($EngineIndex + $EngineArray.Count - 1) % ($EngineArray.Count)
-            if($ShowDebugMessages)
+            if($ShowDebugMessages -or $writeOutput)
             {
                 Write-Host "Inputing Last Output:" -ForegroundColor Cyan
                 Write-Host "Output of Engine " $EngineArray[$PrevEngineIndex] "was" ($EngineSoftwares[$EngineArray[$PrevEngineIndex]]["Output"])
@@ -251,7 +251,7 @@ function PerformOperation
 		}
         else
         {
-            if($ShowDebugMessages)
+            if($ShowDebugMessages -or $writeOutput)
             {
                 Write-Host "Inputing Engine Number:" -ForegroundColor Cyan
                 Write-Host "Engine Array " $EngineArray
@@ -430,7 +430,7 @@ do
 		if($EngineSoftwares[$engine]["index"] -gt $HighestIndex)
 		{
 			$HighestIndex =  $EngineSoftwares[$engine]["index"]
-			Write-Host "HighestIndex " $HighestIndex
+			Write-Host "HighestIndex " $HighestIndex -foregroundColor cyan
 		}
 		
 		if($FirstOutput -eq $false -and $EngineSoftwares[$engine]["executeNextEngine"])
@@ -438,7 +438,7 @@ do
 			$FirstOutput = $true
 			$PaintThisColor = $EngineSoftwares[$engine]["Output"]
 			
-			$TestPointWasPainted = (0..($Points["X"].Count-1)) | Where-Object{$Points["X"][$_] -eq $CurrentPosititon[0] -and $Points["X"][$_] -eq $CurrentPosititon[1]}
+			$TestPointWasPainted = (0..($Points["X"].Count-1)) | Where-Object{$Points["X"][$_] -eq $CurrentPosititon[0] -and $Points["Y"][$_] -eq $CurrentPosititon[1]}
 			
 			if($PaintThisColor -eq 0)
 			{
@@ -467,46 +467,67 @@ do
 			$FirstOutput = $false
 			$MoveToThisSpace = $EngineSoftwares[$engine]["Output"]
 
-			if($MoveToThisSpace -eq "0")
+			if($MoveToThisSpace -eq 0)
 			{
-				$Facing = ($Facing+1)%$DirectionCount
+				Write-Host "Turn right"
+				$Facing = ($Facing + 1)% 4
 			}
-			elseif($MoveToThisSpace -eq "1")
+			elseif($MoveToThisSpace -eq 1)
 			{
-				$Facing = ($Facing+1)%$DirectionCount
+				Write-Host "Turn left"
+				
+				$Facing = ($Facing+4 - 1) %4
 			}
 			
 			if($Facing -eq 0)
 			{
 				Write-Host "Go up"
-				$CurrentPosititon[1] = $CurrentPosititon[1]+1
+				$CurrentPosititon[1] = $CurrentPosititon[1] + 1
 			}
 			elseif($Facing -eq 1)
 			{
 				Write-Host "Go right"
-				$CurrentPosititon[0] = $CurrentPosititon[0]+1
+				$CurrentPosititon[0] = $CurrentPosititon[0] + 1
 			}
 			elseif($Facing -eq 2)
 			{
 				Write-Host "Go down"
-				$CurrentPosititon[1] = $CurrentPosititon[1]-1
+				$CurrentPosititon[1] = $CurrentPosititon[1] - 1
 			}
 			elseif($Facing -eq 3)
 			{
-			
 				Write-Host "Go left"
 				$CurrentPosititon[0] = $CurrentPosititon[0] - 1
 			}
+			else
+			{
+				Write-Host "NULL NULL NULL NULL NULL NULL  - Facing was" $Facing 
+			}
 			
-			Write-Host "Going to Point  ("$CurrentPosititon[0]","$CurrentPosititon[1]")"
+			Write-Host "Going to Point  ("$CurrentPosititon[0]","$CurrentPosititon[1]")" -nonewline
 			
-			$TestPointWasPainted = (0..($Points["X"].Count-1)) | Where-Object{$Points["X"][$_] -eq $CurrentPosititon[0] -and $Points["X"][$_] -eq $CurrentPosititon[1]}			
+			$TestPointWasPainted = (0..($Points["X"].Count-1)) | Where-Object{$Points["X"][$_] -eq $CurrentPosititon[0] -and $Points["Y"][$_] -eq $CurrentPosititon[1]}			
 			if($TestPointWasPainted -eq $null)
 			{
+				Write-Host "`t-- BLACK"
 				$EngineSoftwares[$engine]["Output"] = 0
 			}
 			else
 			{
+				if($C[$TestPointWasPainted[0]] -eq 0)
+				{
+					Write-Host "`t-- BLACK"
+				}
+				elseif ($C[$TestPointWasPainted[0]] -eq 1)
+				{
+					Write-Host "`t-- WHITE"
+				}
+				else
+				{
+					Write-Host "`t-- NULL NULL NULL NULL"
+				
+				}
+			
                 $EngineSoftwares[$engine]["Output"] = $C[$TestPointWasPainted[0]]
 			}
 		}

@@ -1,6 +1,6 @@
 $ShowDebugMessages = $false
 $writeOutput = $false
-$writeInput = $true
+$writeInput = $false
 $ShowJumps = $false
 
 
@@ -447,161 +447,240 @@ $EngineArray = @(1)
 $EngineIndex = 0
 $EngineSoftwares = @{}
 $Output = 1
-$EngineSoftwares[$EngineArray[0]] = @{"IdSet" = $true; "array"= $file.Split(","); "index" = 0; "relativeBase" = 0; "Output"=0; "ScriptComplete" = $false; "executeNextEngine" = $false; "PromptInput" = $true; "PromptMessage" = "-1 = L, 0 = none, 1 = R"}
+$EngineSoftwares[$EngineArray[0]] = @{"IdSet" = $true; "array"= $file.Split(","); "index" = 0; "relativeBase" = 0; "Output"=0; "ScriptComplete" = $false; "executeNextEngine" = $false; "PromptInput" = $false; "PromptMessage" = "-1 = L, 0 = none, 1 = R"}
+do
+{
+	$EngineIndex = 0
+	$engine = $EngineArray[0]
+	$EngineSoftwares[$engine]["executeNextEngine"] = $false
+	do
+	{
+		$IndexReference = ([ref]($EngineSoftwares[$engine]["index"]))
+		$BaseReference = ([ref]($EngineSoftwares[$engine]["relativeBase"]))
+		
+		$EngineSoftwares[$engine]["array"] = PerformOperation 	-array $EngineSoftwares[$engine]["array"] `
+																		-commandIndex $IndexReference `
+																		-relativeBase $BaseReference
+																		
+		
+		$EngineSoftwares[$engine]["index"] = $IndexReference.Value				
+		$EngineSoftwares[$engine]["relativeBase"] = $BaseReference.Value
+	}
+	while($EngineSoftwares[$engine]["executeNextEngine"] -eq $false -and $EngineSoftwares[$engine]["ScriptComplete"] -eq $false)
+		
+	if($Output -eq 1 -and $EngineSoftwares[$engine]["executeNextEngine"])
+	{
+		$Output++
+		
+		if(($EngineSoftwares[$engine]["Output"]) -ne -1)
+		{
+			$xpos = ($EngineSoftwares[$engine]["Output"])
+		}
+		else
+		{
+			$ScoreOutput = $true
+		}
+	}
+	elseif($Output -eq 2 -and $EngineSoftwares[$engine]["executeNextEngine"])
+	{
+		$Output++
+		$ypos = ($EngineSoftwares[$engine]["Output"])
+		if($ScoreOutput -and ($EngineSoftwares[$engine]["Output"]) -ne 0)
+		{
+			$ScoreOutput = $false
+		}
+	}
+	elseif($Output -eq 3 -and $EngineSoftwares[$engine]["executeNextEngine"])
+	{	
+		$Output=1
+		if($ScoreOutput)
+		{
+			$BlockCount -= 1
+			Write-Host "$BlockCount blocks remaining. Score:" ($EngineSoftwares[$engine]["Output"])
+			$score = ($EngineSoftwares[$engine]["Output"])
+		}
+		else
+		{
+			if($EngineSoftwares[$engine]["Output"] -eq 2)
+			{
+				$BlockCount++
+			}
+		}
+	}
+		
+}while($EngineSoftwares[$EngineArray[0]]["ScriptComplete"] -eq $false)
 
-$Points = @{"X"=@(); "Y"=@(); "$C" = @()}
-$Pixels = @()
 
-Write-Host "Engine Array " $EngineArray
+Write-Host "Block Count $BlockCount" -ForegroundColor green
+
+
+<#Part 2#>
+$EngineSoftwares[$EngineArray[0]] = @{"IdSet" = $true; "array"= $file.Split(","); "index" = 0; "relativeBase" = 0; "Output"=0; "ScriptComplete" = $false; "executeNextEngine" = $false; "PromptInput" = $false; "PromptMessage" = "-1 = L, 0 = none, 1 = R"}
+$EngineSoftwares[$EngineArray[0]]["array"][0] = 2
+
 $score = 0
 $ScoreOutput = $false
 $Input = 0
+$ballPosX = 0
+$PaddleX = 0
 
+$PrintBlocks = 20
+
+<#Needed because score outputs 0 at start#>
+$BlockCount++
+$Points = @{"X"=@(); "Y"=@()}
+$Pixels = @()
 do
 {
-	$Points = @{"X"=@(); "Y"=@(); "$C" = @()}
-	$Pixels = @()
+	$EngineIndex = 0
+	$engine = $EngineArray[0]
+	$EngineSoftwares[$engine]["executeNextEngine"] = $false
 	do
 	{
-		$EngineIndex = 0
-		$engine = $EngineArray[0]
-		$EngineSoftwares[$engine]["executeNextEngine"] = $false
-		do
-		{
-			$IndexReference = ([ref]($EngineSoftwares[$engine]["index"]))
-			$BaseReference = ([ref]($EngineSoftwares[$engine]["relativeBase"]))
-			
-			$EngineSoftwares[$engine]["array"] = PerformOperation 	-array $EngineSoftwares[$engine]["array"] `
-																			-commandIndex $IndexReference `
-																			-relativeBase $BaseReference
-																			
-			
-			$EngineSoftwares[$engine]["index"] = $IndexReference.Value				
-			$EngineSoftwares[$engine]["relativeBase"] = $BaseReference.Value
-		}
-		while($EngineSoftwares[$engine]["executeNextEngine"] -eq $false -and $EngineSoftwares[$engine]["ScriptComplete"] -eq $false)
-			
+		$IndexReference = ([ref]($EngineSoftwares[$engine]["index"]))
+		$BaseReference = ([ref]($EngineSoftwares[$engine]["relativeBase"]))
+		
+		$EngineSoftwares[$engine]["array"] = PerformOperation 	-array $EngineSoftwares[$engine]["array"] `
+																		-commandIndex $IndexReference `
+																		-relativeBase $BaseReference
+																		
+		
+		$EngineSoftwares[$engine]["index"] = $IndexReference.Value				
+		$EngineSoftwares[$engine]["relativeBase"] = $BaseReference.Value
+	}
+	while($EngineSoftwares[$engine]["executeNextEngine"] -eq $false -and $EngineSoftwares[$engine]["ScriptComplete"] -eq $false)
+		
 
+	
+	
+	if($Output -eq 1 -and $EngineSoftwares[$engine]["executeNextEngine"])
+	{
+		$Output++
 		
-		
-		if($Output -eq 1 -and $EngineSoftwares[$engine]["executeNextEngine"])
+		if(($EngineSoftwares[$engine]["Output"]) -ne -1)
 		{
-			$Output++
+			$xpos = ($EngineSoftwares[$engine]["Output"])
+		}
+		else
+		{
+			$ScoreOutput = $true
+		}
+	}
+	elseif($Output -eq 2 -and $EngineSoftwares[$engine]["executeNextEngine"])
+	{
+		$Output++
+		$ypos = ($EngineSoftwares[$engine]["Output"])
+		if($ScoreOutput -and ($EngineSoftwares[$engine]["Output"]) -ne 0)
+		{
+			$ScoreOutput = $false
+		}
+	}
+	elseif($Output -eq 3 -and $EngineSoftwares[$engine]["executeNextEngine"])
+	{	
+		$Output=1
+		$UpdateScreen = $false
+		if($ScoreOutput)
+		{
+			$BlockCount -= 1
 			
-			if(($EngineSoftwares[$engine]["Output"]) -ne -1)
+			if($BlockCount %$PrintBlocks -eq 0)
 			{
-				$xpos = ($EngineSoftwares[$engine]["Output"])
+				Write-Host "$BlockCount blocks remaining. Score:" ($EngineSoftwares[$engine]["Output"])
+				<#Render Page#>
+				<#$UpdateScreen = $true#>
 			}
-			else
-			{
-				$ScoreOutput = $true
-			}
+			$score = ($EngineSoftwares[$engine]["Output"])
 		}
-		elseif($Output -eq 2 -and $EngineSoftwares[$engine]["executeNextEngine"])
+		else
 		{
-			$Output++
-			$ypos = ($EngineSoftwares[$engine]["Output"])
-			if($ScoreOutput -and ($EngineSoftwares[$engine]["Output"]) -ne 0)
+			$index = HasPointBeenPainted -x $xpos -y $ypos
+			
+			if($EngineSoftwares[$engine]["Output"] -eq 3)
 			{
-				$ScoreOutput = $false
+				<#Write-Host "Paddle Goes to ($xpos,$ypos)" -foregroundColor red#>
+				$PaddleX = $xpos
 			}
-		}
-		elseif($Output -eq 3 -and $EngineSoftwares[$engine]["executeNextEngine"])
-		{	
-			$Output=1
-			if($ScoreOutput)
+			elseif($EngineSoftwares[$engine]["Output"] -eq 4)
 			{
-				$score += ($EngineSoftwares[$engine]["Output"])
-				Write-Host "Score!" $score
-			}
-			else
-			{
-				$index = HasPointBeenPainted -x $xpos -y $ypos
-				$UpdateScreen = $false
+				$UpdateScreen = ($EngineSoftwares[$engine]["PrintOutput"]) 
+				<#Write-Host "Ball Goes to ($xpos,$ypos)" -foregroundColor red#>
+				$ballPosX = $xpos
 				
-				if($EngineSoftwares[$engine]["Output"] -eq 3)
+				if($ballPosX -gt $PaddleX)
 				{
-					$UpdateScreen = ($EngineSoftwares[$engine]["PrintOutput"]) 
-					Write-Host "Paddle Goes to ($xpos,$ypos)" -foregroundColor red
+					$Input = 1
 				}
-				elseif($EngineSoftwares[$engine]["Output"] -eq 4)
+				elseif($ballPosX -lt $PaddleX)
 				{
-					$UpdateScreen = ($EngineSoftwares[$engine]["PrintOutput"]) 
-					Write-Host "Ball Goes to ($xpos,$ypos)" -foregroundColor red
-				}
-				
-				if($index -eq $null)
-				{
-					$Points["X"] += ($xpos)
-					$Points["Y"] += ($ypos)
-					$Pixels += ($EngineSoftwares[$engine]["Output"])
+					$Input = -1
 				}
 				else
 				{
-					<#Write-Host "XCOUNT - " $Points["X"].Count
-					Write-Host "YCOUNT - " $Points["Y"].Count
-					Write-Host "PixelCount - " $Pixels.Count
-					Write-Host ($Pixels[$index])#>
-					$Pixels[$index] = ($EngineSoftwares[$engine]["Output"])
-					
-				}
-				
-				
-				
-				$xRange = $Points["X"] | Measure-Object -maximum -minimum
-				$yRange = $Points["Y"] | Measure-Object -maximum -minimum
-				
-				if($UpdateScreen)
-				{
-					for($y = $yRange.minimum; $y -le $yRange.maximum; $y++)
-					{
-						
-						for($x = $xRange.minimum; $x -le $xRange.maximum; $x++)
-						{
-							for($i = 0; $i -lt $Pixels.Count; $i++)
-							{
-								if(($Points["X"][$i]) -ne $x -or ($Points["Y"][$i]) -ne $y)
-								{
-									continue
-								}
-								
-								if(($Pixels[$i]) -eq 0)
-								{
-									Write-Host " " -nonewline
-								}		
-								elseif(($Pixels[$i]) -eq 1)
-								{
-									Write-Host "|" -nonewline
-								}				
-								elseif(($Pixels[$i]) -eq 2)
-								{
-									Write-Host "B" -nonewline
-								}				
-								elseif(($Pixels[$i]) -eq 3)
-								{
-									Write-Host "=" -nonewline
-								}				
-								elseif(($Pixels[$i]) -eq 4)
-								{
-									Write-Host "*" -nonewline
-								}
-							}
-						
-						}
-						Write-Host ""
-					}
-				}
+					$Input = 0
+				}					
+			}
+			
+			if($index -eq $null)
+			{
+				$Points["X"] += ($xpos)
+				$Points["Y"] += ($ypos)
+				$Pixels += ($EngineSoftwares[$engine]["Output"])
+			}
+			else
+			{
+				$Pixels[$index] = ($EngineSoftwares[$engine]["Output"])
 			}
 		}
-		$EngineSoftwares[$engine]["Output"] = $Input
 		
-}while($EngineSoftwares[$EngineArray[0]]["ScriptComplete"] -eq $false )
-	
-	
 
-
-	
-}while($false)
+		
+		if($UpdateScreen)
+		{
+			$xRange = $Points["X"] | Measure-Object -maximum -minimum
+			$yRange = $Points["Y"] | Measure-Object -maximum -minimum		
+		
+			for($y = $yRange.minimum; $y -le $yRange.maximum; $y++)
+			{
+				
+				for($x = $xRange.minimum; $x -le $xRange.maximum; $x++)
+				{
+					for($i = 0; $i -lt $Pixels.Count; $i++)
+					{
+						if(($Points["X"][$i]) -ne $x -or ($Points["Y"][$i]) -ne $y)
+						{
+							continue
+						}
+						
+						if(($Pixels[$i]) -eq 0)
+						{
+							Write-Host " " -nonewline
+						}		
+						elseif(($Pixels[$i]) -eq 1)
+						{
+							Write-Host "|" -nonewline
+						}				
+						elseif(($Pixels[$i]) -eq 2)
+						{
+							Write-Host "B" -nonewline
+						}				
+						elseif(($Pixels[$i]) -eq 3)
+						{
+							Write-Host "=" -foregroundColor green -nonewline
+						}				
+						elseif(($Pixels[$i]) -eq 4)
+						{
+							Write-Host "*" -foregroundColor yellow -nonewline
+						}
+					}
+				
+				}
+				Write-Host ""
+			}
+		}
+	}
+	$EngineSoftwares[$engine]["Output"] = $Input
+		
+}while($EngineSoftwares[$EngineArray[0]]["ScriptComplete"] -eq $false  -or $BlockCount -gt 0)
 
 Write-Host "GAME OVER"
 

@@ -447,6 +447,7 @@ $EngineArray = @(1)
 $EngineIndex = 0
 $EngineSoftwares = @{}
 $Output = 1
+$width = 0
 $EngineSoftwares[$EngineArray[0]] = @{"IdSet" = $true; "array"= $file.Split(","); "index" = 0; "relativeBase" = 0; "Output"=0; "ScriptComplete" = $false; "executeNextEngine" = $false; "PromptInput" = $false; "PromptMessage" = "-1 = L, 0 = none, 1 = R"}
 do
 {
@@ -493,6 +494,7 @@ do
 	elseif($Output -eq 3 -and $EngineSoftwares[$engine]["executeNextEngine"])
 	{	
 		$Output=1
+		
 		if($ScoreOutput)
 		{
 			$BlockCount -= 1
@@ -517,24 +519,27 @@ Write-Host "Block Count $BlockCount" -ForegroundColor green
 <#Part 2#>
 $EngineSoftwares[$EngineArray[0]] = @{"IdSet" = $true; "array"= $file.Split(","); "index" = 0; "relativeBase" = 0; "Output"=0; "ScriptComplete" = $false; "executeNextEngine" = $false; "PromptInput" = $false; "PromptMessage" = "-1 = L, 0 = none, 1 = R"}
 $EngineSoftwares[$EngineArray[0]]["array"][0] = 2
-
+$Output=1
 $score = 0
 $ScoreOutput = $false
 $Input = 0
 $ballPosX = 0
 $PaddleX = 0
 
-$PrintBlocks = 20
+$PrintBlocks = 50
 
 <#Needed because score outputs 0 at start#>
 $BlockCount++
 $Points = @{"X"=@(); "Y"=@()}
 $Pixels = @()
+$Loaded = $false
+$RenderOutput=""
 do
 {
 	$EngineIndex = 0
 	$engine = $EngineArray[0]
 	$EngineSoftwares[$engine]["executeNextEngine"] = $false
+	$Rendering = $false
 	do
 	{
 		$IndexReference = ([ref]($EngineSoftwares[$engine]["index"]))
@@ -585,7 +590,7 @@ do
 			
 			if($BlockCount %$PrintBlocks -eq 0)
 			{
-				Write-Host "$BlockCount blocks remaining. Score:" ($EngineSoftwares[$engine]["Output"])
+				<#Write-Host "$BlockCount blocks remaining. Score:" ($EngineSoftwares[$engine]["Output"])#>
 				<#Render Page#>
 				<#$UpdateScreen = $true#>
 			}
@@ -594,18 +599,21 @@ do
 		else
 		{
 			$index = HasPointBeenPainted -x $xpos -y $ypos
-			
-			if($EngineSoftwares[$engine]["Output"] -eq 3)
+	
+			if(($EngineSoftwares[$engine]["Output"]) -eq 3)
 			{
+				$char1 = "="
 				<#Write-Host "Paddle Goes to ($xpos,$ypos)" -foregroundColor red#>
+				
 				$PaddleX = $xpos
 			}
-			elseif($EngineSoftwares[$engine]["Output"] -eq 4)
+			elseif(($EngineSoftwares[$engine]["Output"]) -eq 4)
 			{
+				$char1 = "O"
 				$UpdateScreen = ($EngineSoftwares[$engine]["PrintOutput"]) 
 				<#Write-Host "Ball Goes to ($xpos,$ypos)" -foregroundColor red#>
 				$ballPosX = $xpos
-				
+				$Rendering = $true
 				if($ballPosX -gt $PaddleX)
 				{
 					$Input = 1
@@ -617,8 +625,13 @@ do
 				else
 				{
 					$Input = 0
-				}					
+				}
 			}
+			elseif(($EngineSoftwares[$engine]["Output"]) -eq 0)
+			{
+				$char1 = " "
+			}
+			
 			
 			if($index -eq $null)
 			{
@@ -629,6 +642,24 @@ do
 			else
 			{
 				$Pixels[$index] = ($EngineSoftwares[$engine]["Output"])
+				
+				<#Character count in output: Carriage return + 0 based ypos + 0 based xpos#>
+				if($Loaded)
+				{
+					$RenderIndex = ($ypos+1) + $ypos*$width + ($xpos+1)
+					$RenderOutput= $RenderOutput.Remove($RenderIndex,1).Insert($RenderIndex,$char1)
+					<#Write-Host "Rendering Char" $char1#>
+					if($Rendering)
+					{
+						Write-Host $RenderOutput -nonewline
+					}
+				}
+				
+				if(!$Loaded)
+				{
+					$UpdateScreen = $true
+					$Rendering = $true
+				}
 			}
 		}
 		
@@ -638,10 +669,23 @@ do
 		{
 			$xRange = $Points["X"] | Measure-Object -maximum -minimum
 			$yRange = $Points["Y"] | Measure-Object -maximum -minimum		
-		
+			
+			Write-Host "YMin" ($yRange.minimum) "YMax" ($yRange.maximum)
+			Write-Host "XMin" ($xRange.minimum) "XMax" ($xRange.maximum)
+			$width = $xRange.maximum - $xRange.minimum + 1
+			
+			pause
+			
+			if($Rendering)
+			{
+				$RenderOutput="`r"
+			}
 			for($y = $yRange.minimum; $y -le $yRange.maximum; $y++)
 			{
-				
+				if($Rendering)
+				{
+					$RenderOutput+="`n"
+				}
 				for($x = $xRange.minimum; $x -le $xRange.maximum; $x++)
 				{
 					for($i = 0; $i -lt $Pixels.Count; $i++)
@@ -651,38 +695,53 @@ do
 							continue
 						}
 						
+						$color = "white"
 						if(($Pixels[$i]) -eq 0)
 						{
-							Write-Host " " -nonewline
+							$char = " "
 						}		
 						elseif(($Pixels[$i]) -eq 1)
 						{
-							Write-Host "|" -nonewline
+							$char = "|"
 						}				
 						elseif(($Pixels[$i]) -eq 2)
 						{
-							Write-Host "B" -nonewline
+							$char = "#"
 						}				
 						elseif(($Pixels[$i]) -eq 3)
 						{
-							Write-Host "=" -foregroundColor green -nonewline
+							$char = "="
+							$color = "green"
 						}				
 						elseif(($Pixels[$i]) -eq 4)
 						{
-							Write-Host "*" -foregroundColor yellow -nonewline
+							$char = "O"
+							$color = "yellow"
 						}
+						
+						if($Rendering)
+						{
+							$RenderOutput += $char
+						}
+						elseif($UpdateScreen)
+						{
+							Write-Host $char -nonewline -foregroundColor $color
+						}						
 					}
-				
 				}
-				Write-Host ""
+				if($UpdateScreen)
+				{				
+					Write-Host ""
+				}
 			}
+			$Loaded = $true
 		}
 	}
 	$EngineSoftwares[$engine]["Output"] = $Input
 		
 }while($EngineSoftwares[$EngineArray[0]]["ScriptComplete"] -eq $false  -or $BlockCount -gt 0)
 
-Write-Host "GAME OVER"
+Write-Host "`nGAME OVER" -ForegroundColor red
 
 <#Write-Host "Number of blocks=" $twos#>
-Write-Host "Score :" $score
+Write-Host "Score :" $score -ForegroundColor green

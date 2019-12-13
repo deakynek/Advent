@@ -453,7 +453,7 @@ $Points = @{"X"=@(); "Y"=@(); "$C" = @()}
 $Pixels = @()
 
 Write-Host "Engine Array " $EngineArray
-$score=0
+$score = 0
 $ScoreOutput = $false
 $Input = 0
 
@@ -488,9 +488,9 @@ do
 		{
 			$Output++
 			
-			if($EngineSoftwares[$engine]["Output"] -ne -1)
+			if(($EngineSoftwares[$engine]["Output"]) -ne -1)
 			{
-				$xpos = $EngineSoftwares[$engine]["Output"]
+				$xpos = ($EngineSoftwares[$engine]["Output"])
 			}
 			else
 			{
@@ -500,10 +500,10 @@ do
 		elseif($Output -eq 2 -and $EngineSoftwares[$engine]["executeNextEngine"])
 		{
 			$Output++
-			if(($ScoreOutput -and $EngineSoftwares[$engine]["Output"] -ne 0) -or !$ScoreOutput)
+			$ypos = ($EngineSoftwares[$engine]["Output"])
+			if($ScoreOutput -and ($EngineSoftwares[$engine]["Output"]) -ne 0)
 			{
 				$ScoreOutput = $false
-				$ypos = $EngineSoftwares[$engine]["Output"]
 			}
 		}
 		elseif($Output -eq 3 -and $EngineSoftwares[$engine]["executeNextEngine"])
@@ -511,18 +511,22 @@ do
 			$Output=1
 			if($ScoreOutput)
 			{
-				$score = $EngineSoftwares[$engine]["Output"]
+				$score += ($EngineSoftwares[$engine]["Output"])
+				Write-Host "Score!" $score
 			}
 			else
 			{
 				$index = HasPointBeenPainted -x $xpos -y $ypos
+				$UpdateScreen = $false
 				
 				if($EngineSoftwares[$engine]["Output"] -eq 3)
 				{
+					$UpdateScreen = ($EngineSoftwares[$engine]["PrintOutput"]) 
 					Write-Host "Paddle Goes to ($xpos,$ypos)" -foregroundColor red
 				}
 				elseif($EngineSoftwares[$engine]["Output"] -eq 4)
 				{
+					$UpdateScreen = ($EngineSoftwares[$engine]["PrintOutput"]) 
 					Write-Host "Ball Goes to ($xpos,$ypos)" -foregroundColor red
 				}
 				
@@ -534,10 +538,12 @@ do
 				}
 				else
 				{
-					Write-Host "Index is " ($index)
-					Write-Host "("($Points["X"][$index])","($Points["Y"][$index])")"
+					<#Write-Host "XCOUNT - " $Points["X"].Count
+					Write-Host "YCOUNT - " $Points["Y"].Count
+					Write-Host "PixelCount - " $Pixels.Count
+					Write-Host ($Pixels[$index])#>
 					$Pixels[$index] = ($EngineSoftwares[$engine]["Output"])
-					Write-Host ($Pixels[$index])
+					
 				}
 				
 				
@@ -545,14 +551,14 @@ do
 				$xRange = $Points["X"] | Measure-Object -maximum -minimum
 				$yRange = $Points["Y"] | Measure-Object -maximum -minimum
 				
-				if(($EngineSoftwares[$engine]["PrintOutput"]) -eq $true)
+				if($UpdateScreen)
 				{
 					for($y = $yRange.minimum; $y -le $yRange.maximum; $y++)
 					{
 						
 						for($x = $xRange.minimum; $x -le $xRange.maximum; $x++)
 						{
-							for($i = 0; $i -lt $Pixels["X"].Count; $i++)
+							for($i = 0; $i -lt $Pixels.Count; $i++)
 							{
 								if(($Points["X"][$i]) -ne $x -or ($Points["Y"][$i]) -ne $y)
 								{
@@ -584,14 +590,12 @@ do
 						}
 						Write-Host ""
 					}
-					
-					$EngineSoftwares[$engine]["PrintOutput"] = $false
 				}
 			}
 		}
 		$EngineSoftwares[$engine]["Output"] = $Input
 		
-	}while($EngineSoftwares[$EngineArray[0]]["ScriptComplete"] -eq $false )
+}while($EngineSoftwares[$EngineArray[0]]["ScriptComplete"] -eq $false )
 	
 	
 

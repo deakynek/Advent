@@ -651,6 +651,7 @@ do
 					<#Write-Host "Rendering Char" $char1#>
 					if($Rendering)
 					{
+						Clear-Host
 						Write-Host $RenderOutput -nonewline
 					}
 				}

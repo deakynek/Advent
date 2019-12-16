@@ -34,7 +34,7 @@ function RecurseMakeElement
 	}
 	if($debug)
 	{
-		Write-Host "Makeing $ammountNeeded of $elementName"
+		Write-Host "Making $ammountNeeded of $elementName"
 	}
 	
 	$equation = $equations[$elementName]
@@ -124,13 +124,13 @@ function RecurseMakeTheMostOfThisElement
 		{
 			$multPossible = [math]::ceiling($max/($equationAm[0]))
 		}
-		Write-Host "Adding" ($multPossible* $equationAm[0]) "$elementName"
-		AddToExtra -elementName $elementName -ammount ($multPossible* $equationAm[0])
 		
+		AddToExtra -elementName $elementName -ammount ($multPossible* $equationAm[0])
+		Write-Host "Adding" ($multPossible* $equationAm[0]) "$elementName, Total = " (GetExtraCount -elementName ($equationAm[0]))
 		for($i = 1; $i -lt $equationEl.count; $i++)
 		{
-			Write-Host "`tUsing" ($multPossible* $equationAm[$i]) ""($equationEl[$i])
 			RemoveFromExtra -elementName $equationEl[$i] -ammount ($multPossible*$equationAm[$i])
+			Write-Host "`tUsing" ($multPossible* $equationAm[$i]) ""($equationEl[$i])
 		}
 	}
 	else
@@ -147,6 +147,55 @@ function RecurseMakeTheMostOfThisElement
 		}
 	}
 	
+	
+}
+
+function RecurseMakeNonFuelExtraIntoOre
+{
+	Param(
+		[Parameter(Mandatory=$true)]
+		[string] $elementName
+		)
+		
+	if($elementName -eq $ore)
+	{
+		return
+	}
+	
+	
+	$equation = $equations[$elementName]
+	$equationEl = $equation["elements"]
+	$equationAm = $equation["amounts"]
+	
+	if($elementName -ne $fuel)
+	{
+		
+		$ExtraAmmount = GetExtraCount -elementName $elementName
+		$couldMake = ($ExtraAmmount/($equationAm[0]))
+		$thisMult = [math]::floor($couldMake)
+		
+		if($thisMult -gt 0)
+		{
+			RemoveFromExtra -elementName $elementName -ammount ($thisMult*$equationAm[0])
+			if($debug)
+			{
+				Write-Host "-"($thisMult*$equationAm[0])" units of "$elementName" leaving " (GetExtraCount -elementName $elementName)"extra"-foregroundcolor red
+			}
+			for($i = 1; $i -lt $equationEl.count; $i++)
+			{
+				AddToExtra -elementName ($equationEl[$i]) -ammount ($thisMult*$equationAm[$i])
+				if($debug)
+				{
+					Write-Host "`t+"($thisMult*$equationAm[$i])" units of "($equationEl[$i])", total count = "(GetExtraCount -elementName ($equationEl[$i]))  -foregroundcolor green
+				}
+			}
+		}
+	}
+	
+	for($i = 1; $i -lt $equationEl.count; $i++)
+	{
+		RecurseMakeNonFuelExtraIntoOre -elementName ($equationEl[$i])
+	}
 	
 }
 
@@ -389,138 +438,178 @@ foreach($eq in $equations.Keys)
 
 
 Write-Host "Keys " ($equations.Keys)
-
-$elementsNeeded =  @{"elements" = ([System.Collections.ArrayList]@("FUEL")); "amounts" = ([System.Collections.ArrayList]@(1))}
-$Extras =  @{"elements" = ([System.Collections.ArrayList]@()); "amounts" = ([System.Collections.ArrayList]@())}
+$Powerof10 = 9
+$guess = 0
+$OreCount = 1000000000000 
 do
 {
-	$copyEl = [System.Collections.ArrayList]@()
-	$copyAm = [System.Collections.ArrayList]@()
-	for($i = 0; $i -lt $elementsNeeded["elements"].count; $i++)
+	$guess += [math]::pow(10,$Powerof10)
+
+	$elementsNeeded =  @{"elements" = ([System.Collections.ArrayList]@("FUEL")); "amounts" = ([System.Collections.ArrayList]@($guess))}
+	$Extras =  @{"elements" = ([System.Collections.ArrayList]@()); "amounts" = ([System.Collections.ArrayList]@())}
+	do
 	{
-		if($equations.Keys -notcontains $elementsNeeded["elements"][$i])
+		$copyEl = [System.Collections.ArrayList]@()
+		$copyAm = [System.Collections.ArrayList]@()
+		for($i = 0; $i -lt $elementsNeeded["elements"].count; $i++)
 		{
-			Write-Host "Could not find" ($elementsNeeded["elements"][$i])
-			if($copyEl -contains  ($elementsNeeded["elements"][$i]))
+			if($equations.Keys -notcontains $elementsNeeded["elements"][$i])
 			{
-				$copyAm[$copyEl.IndexOf(($elementsNeeded["elements"][$i]))] += ($elementsNeeded["amounts"][$i])
+				if($debug)
+				{
+					Write-Host "Could not find" ($elementsNeeded["elements"][$i])
+				}
+				if($copyEl -contains  ($elementsNeeded["elements"][$i]))
+				{
+					$copyAm[$copyEl.IndexOf(($elementsNeeded["elements"][$i]))] += ($elementsNeeded["amounts"][$i])
+				}
+				else
+				{
+					$k= $copyEl.Add(($elementsNeeded["elements"][$i]))
+					$k= $copyAm.Add(($elementsNeeded["amounts"][$i]))
+				}			
+				
+				continue
 			}
-			else
-			{
-				$k= $copyEl.Add(($elementsNeeded["elements"][$i]))
-				$k= $copyAm.Add(($elementsNeeded["amounts"][$i]))
-			}			
 			
-			continue
-		}
-		
-		$AmmountNeeded = ($elementsNeeded["amounts"][$i])
-		$ElementNeeded = ($elementsNeeded["elements"][$i])
-		
-		$equation = $equations[$elementsNeeded["elements"][$i]]
-		$equationEl = $equation["elements"]
-		$equationAm = $equation["amounts"]
-		
-		Write-Host "Eq El "$equationEl -foregroundcolor cyan
-		Write-Host "Eq Am" $equationAm -foregroundcolor cyan
-		
-		if($Extras["elements"] -contains $ElementNeeded)
-		{
-			$extraAm = ($Extras["amounts"][$Extras["elements"].IndexOf($ElementNeeded)])
-		}
-		else
-		{
-			$extraAm = 0
-		}
-		
-		if($extraAm -ne 0)
-		{
-			Write-Host "HAD "$extraAm" OF "($elementsNeeded["elements"][$i]) "LYING AROUND" -foregroundcolor green
-		}
-		
-		if($extraAm -gt $AmmountNeeded)
-		{
-			$AmmountNeeded = 0
-			if($Extras["elements"] -contains $ElementNeeded)
+			$AmmountNeeded = ($elementsNeeded["amounts"][$i])
+			$ElementNeeded = ($elementsNeeded["elements"][$i])
+			
+			$equation = $equations[$elementsNeeded["elements"][$i]]
+			$equationEl = $equation["elements"]
+			$equationAm = $equation["amounts"]
+			
+			if($debug)
 			{
-				$Extras["amounts"][$Extras["elements"].IndexOf($ElementNeeded)] = $extraAm - $AmmountNeeded
+				Write-Host "Eq El "$equationEl -foregroundcolor cyan
+				Write-Host "Eq Am" $equationAm -foregroundcolor cyan
 			}
-		}
-		else
-		{
-			$AmmountNeeded -= $extraAm
 			
 			if($Extras["elements"] -contains $ElementNeeded)
 			{
-				$Extras["amounts"][$Extras["elements"].IndexOf($ElementNeeded)] = 0
+				$extraAm = ($Extras["amounts"][$Extras["elements"].IndexOf($ElementNeeded)])
 			}
 			else
 			{
-				$Extras["elements"] += $ElementNeeded
-				$Extras["amounts"] += 0
-			}
-		}
-		
-		$mult = [math]::ceiling($AmmountNeeded/($equationAm[0]))
-		
-		
-		$elementsAdded = [System.Collections.ArrayList]@()
-		$ammountAdded = [System.Collections.ArrayList]@()
-		if($AmmountNeeded -ne 0)
-		{
-			if($Extras["elements"] -contains $ElementNeeded)
-			{
-				$Extras["amounts"][$Extras["elements"].IndexOf($ElementNeeded)] = ($equationAm[0])*$mult - $AmmountNeeded
-			}
-			else
-			{
-				$Extras["elements"] += $ElementNeeded
-				$Extras["amounts"] += ($equationAm[0])*$mult - $AmmountNeeded
-			}		
-		
-			for($j = 1; $j -lt $equationEl.Count; $j++)
-			{
-				$k=  $elementsAdded.Add(($equationEl[$j])) 
-				$k=  $ammountAdded.Add($mult*($equationAm[$j]))
+				$extraAm = 0
 			}
 			
-			Write-Host "To get "($elementsNeeded["amounts"][$i])" units of "($elementsNeeded["elements"][$i])
-			Write-Host "`tNeed to run equation" $mult "times"
-			Write-Host "`tProducing " ($Extras["amounts"][$Extras["elements"].IndexOf($ElementNeeded)]) "extra"
-		}
-		
-		Write-Host "El Added "$elementsAdded
-		Write-Host "Am Added "$ammountAdded		
-		for($j = 0; $j -lt $elementsAdded.Count; $j++)
-		{
-			if($copyEl -contains  ($elementsAdded[$j]))
+			if($debug -and $extraAm -ne 0)
 			{
-				$copyAm[$copyEl.IndexOf(($elementsAdded[$j]))] += ($ammountAdded[$j])
+				Write-Host "HAD "$extraAm" OF "($elementsNeeded["elements"][$i]) "LYING AROUND" -foregroundcolor green
+			}
+			
+			if($extraAm -gt $AmmountNeeded)
+			{
+				$AmmountNeeded = 0
+				if($Extras["elements"] -contains $ElementNeeded)
+				{
+					$Extras["amounts"][$Extras["elements"].IndexOf($ElementNeeded)] = $extraAm - $AmmountNeeded
+				}
 			}
 			else
 			{
-				$k= $copyEl.Add(($elementsAdded[$j]))
-				$k= $copyAm.Add(($ammountAdded[$j]))
+				$AmmountNeeded -= $extraAm
+				
+				if($Extras["elements"] -contains $ElementNeeded)
+				{
+					$Extras["amounts"][$Extras["elements"].IndexOf($ElementNeeded)] = 0
+				}
+				else
+				{
+					$Extras["elements"] += $ElementNeeded
+					$Extras["amounts"] += 0
+				}
+			}
+			
+			$mult = [math]::ceiling($AmmountNeeded/($equationAm[0]))
+			
+			
+			$elementsAdded = [System.Collections.ArrayList]@()
+			$ammountAdded = [System.Collections.ArrayList]@()
+			if($AmmountNeeded -ne 0)
+			{
+				if($Extras["elements"] -contains $ElementNeeded)
+				{
+					$Extras["amounts"][$Extras["elements"].IndexOf($ElementNeeded)] = ($equationAm[0])*$mult - $AmmountNeeded
+				}
+				else
+				{
+					$Extras["elements"] += $ElementNeeded
+					$Extras["amounts"] += ($equationAm[0])*$mult - $AmmountNeeded
+				}		
+			
+				for($j = 1; $j -lt $equationEl.Count; $j++)
+				{
+					$k=  $elementsAdded.Add(($equationEl[$j])) 
+					$k=  $ammountAdded.Add($mult*($equationAm[$j]))
+				}
+				
+				if($debug)
+				{
+					Write-Host "To get "($elementsNeeded["amounts"][$i])" units of "($elementsNeeded["elements"][$i])
+					Write-Host "`tNeed to run equation" $mult "times"
+					Write-Host "`tProducing " ($Extras["amounts"][$Extras["elements"].IndexOf($ElementNeeded)]) "extra"
+				}
+			}
+			
+			if($debug)
+			{
+				Write-Host "El Added "$elementsAdded
+				Write-Host "Am Added "$ammountAdded		
+			}
+			for($j = 0; $j -lt $elementsAdded.Count; $j++)
+			{
+				if($copyEl -contains  ($elementsAdded[$j]))
+				{
+					$copyAm[$copyEl.IndexOf(($elementsAdded[$j]))] += ($ammountAdded[$j])
+				}
+				else
+				{
+					$k= $copyEl.Add(($elementsAdded[$j]))
+					$k= $copyAm.Add(($ammountAdded[$j]))
+				}
 			}
 		}
+
+		if($debug)
+		{
+			Write-Host "CopyEl "$copyEl -foregroundcolor red
+			Write-Host "CopyAm" $copyAm -foregroundcolor red
+		}
+		$elementsNeeded["elements"] = $copyEl
+		$elementsNeeded["amounts"] = $copyAm	
+
+	}while ($elementsNeeded["elements"].count -gt 1)
+	
+	Write-Host "`n"($guess)" Fuel needs" -Foregroundcolor cyan
+	Write-Host "`tElements "($elementsNeeded["elements"])
+	Write-Host "`tAmmounts" ($elementsNeeded["amounts"])
+	
+	if($elementsNeeded["amounts"][0] -gt $OreCount)
+	{
+		$guess -= [math]::pow(10,$Powerof10)
+		$Powerof10 -= 1
+		Write-Host "`tTOO HIGH!" -Foregroundcolor RED
 	}
+	
+}while ($Powerof10 -ge 0)
 
-	Write-Host "CopyEl "$copyEl -foregroundcolor red
-	Write-Host "CopyAm" $copyAm -foregroundcolor red
-	$elementsNeeded["elements"] = $copyEl
-	$elementsNeeded["amounts"] = $copyAm	
+Write-Host "Fuel that can be made with 1000000000000 ore is" $guess
 
-}while ($elementsNeeded["elements"].count -gt 1)
-
-Write-Host "Elements "($elementsNeeded["elements"])
-Write-Host "Ammounts" ($elementsNeeded["amounts"])
-
+<#
 $FuelUsingUsualMethod = [math]::floor(1000000000000/($elementsNeeded["amounts"][0]))
 Write-Host "With 1,000,000,000,000 ORE can make $FuelUsingUsualMethod fuel"
 Write-Host "With this much extra:"
 
+
+
+$ExtrasPerFuel =  @{"elements" = ([System.Collections.ArrayList]@($Extras["elements"])); "amounts" = ([System.Collections.ArrayList]@($Extras["amounts"]))}
+
+
 $ore = "ORE"
-$unitsOreRemaining = (1000000000000 - ($FuelUsingUsualMethod*($elementsNeeded["amounts"][0])))
+$fuel = "FUEL"#>
+<#$unitsOreRemaining = (1000000000000 - ($FuelUsingUsualMethod*($elementsNeeded["amounts"][0])))
 if($Extras["elements"] -contains $ore)
 {
 	$Extras["amounts"][$Extras["elements"].IndexOf($ore)] = $unitsOreRemaining
@@ -532,7 +621,7 @@ else
 }	
 
 
-$fuel = "FUEL"
+
 if($Extras["elements"] -contains $fuel)
 {
 	$Extras["amounts"][$Extras["elements"].IndexOf($fuel)] = $FuelUsingUsualMethod
@@ -555,17 +644,24 @@ for($i =0; $i -lt $Extras["elements"].count; $i++)
 		$Extras["amounts"][$i] = ($Extras["amounts"][$i] * $FuelUsingUsualMethod)
 		Write-Host ""($Extras["amounts"][$i])" units of " $Extras["elements"][$i]
 	}
-}
+}#>
 
-pause
+<#pause
 
+$Extras =  @{"elements" = ([System.Collections.ArrayList]@()); "amounts" = ([System.Collections.ArrayList]@())}
 $loopCount = 1
 $debug = $false
 $fuelEquation = $equations[$fuel]
 $fuelEquationEl = $fuelEquation["elements"]
 $fuelEquationAm = $fuelEquation["amounts"]
-$LoopCountOutput = 1000
+$LoopCountOutput = 1
 
+
+
+
+$MinOrePerFuel = ($elementsNeeded["amounts"][0])
+AddToExtra -elementName $ore -ammount 1000000000000
+AddToExtra -elementName $fuel -ammount 0
 
 
 do
@@ -573,112 +669,63 @@ do
 
 	$OldElements = [System.Collections.ArrayList]@($Extras["elements"])
 	$OldAmmounts = [System.Collections.ArrayList]@($Extras["amounts"])
+	
 	$oldFuelAmmount = $Extras["amounts"][$Extras["elements"].IndexOf($fuel)]
+	$oldOreAmmount = $Extras["amounts"][$Extras["elements"].IndexOf($ore)]
 	
-	RecurseMakeTheMostOfThisElement -elementName $fuel -max 0
-	
-	<#Make MaxAmmount of Fuel#>
-	<#$multPossible = $null
-	for($i = 1; $i -lt $fuelEquationEl.count; $i++)
-	{
-		$couldMake = (GetExtraCount -elementName ($fuelEquationEl[$i]))/($fuelEquationAm[$i])
-		$thisMult = [math]::floor($couldMake)
-		if(($multPossible -eq $null) -or ($thisMult -lt $multPossible))
-		{
-			$multPossible = $thisMult
-		}
-		
-		if($debug)
-		{
-			Write-Host "Have " (GetExtraCount -elementName ($fuelEquationEl[$i])) "of " ($fuelEquationEl[$i])
-			Write-Host "Need " ($fuelEquationAm[$i]) "for" $fuelEquationAm[0] "Fuel"
-			Write-Host "could make $couldMake of "$fuelEquationEl[$i]
-			Write-Host "this mult"  $thisMult -foregroundcolor green
-		}
-	}
-	
-	if($debug)
-	{
-		Write-Host "mult possible"  $multPossible -foregroundcolor red
-	}
-	for($i = 1; $i -lt $fuelEquationEl.count; $i++)
-	{
-		RemoveFromExtra -elementName ($fuelEquationEl[$i]) -ammount ($multPossible*($fuelEquationAm[$i]))
-		
-		if($debug)
-		{
-			Write-Host "Element Count Before" (GetExtraCount -elementName ($fuelEquationEl[$i]))
-			Write-Host "Removing" ($multPossible*($fuelEquationAm[$i]))
-			Write-Host "`tElement Count After" (GetExtraCount -elementName ($fuelEquationEl[$i]))
-		}
-	}
-	
-	AddToExtra -elementName $fuel -ammount ($multPossible*$fuelEquationAm[0])
-	if($debug)
-	{
-		Write-Host "Adding "($multPossible*$fuelEquationAm[0])" Fuel"
-	}#>
-	
-	
-	
-	
-	
-	<#$elementsAdded = [System.Collections.ArrayList]@()
-	$ammountAdded = [System.Collections.ArrayList]@()
-	for($i = 1; $i -lt $fuelEquationEl.count; $i++)
-	{
-		$ammountMade = RecurseMakeElement -elementName ($fuelEquationEl[$i]) -ammountNeeded ($fuelEquationAm[$i])
-		$elementsAdded += ($fuelEquationEl[$i])
-		$ammountAdded += $ammountMade
-		if($debug)
-		{
-			Write-Host "Adding " $ammountMade " element "($fuelEquationEl[$i])"and needed " ($fuelEquationAm[$i])
-		}
-	}
-	
-	$success = $true
-	for($i = 0; $i -lt $elementsAdded.count; $i++)
-	{
-		if($debug)
-		{
-			Write-Host "Added "($ammountAdded[$i]) " element "($elementsAdded[$i])"and needed " ($fuelEquationAm[$i+1])
-		}	
-		
-		if($ammountAdded[$i] -lt ($fuelEquationAm[$i+1]))
-		{
-			$success = $false
-			break
-		}
-	}
-	
-	if($success)
-	{
-		AddToExtra -elementName $fuel -ammount 1
-		for($i = 1; $i -lt $fuelEquationEl.count; $i++)
-		{
-			AddToExtra -elementName $fuelEquationEl[$i] -ammount $ammountAdded[$i-1]
-			RemoveFromExtra -elementName $fuelEquationEl[$i] -ammount $fuelEquationAm[$i]
-		}
-	}#>
+	$FuelThisRound = [math]::floor($oldOreAmmount/($MinOrePerFuel))
 
+	Write-Host ""
+	AddToExtra -elementName $fuel -ammount $FuelThisRound
+	Write-Host "Made "($FuelThisRound) "Fuel from $oldOreAmmount ore" -foregroundcolor green
 	
-	$newFuelAmmount = $Extras["amounts"][$Extras["elements"].IndexOf($fuel)]
+	RemoveFromExtra -elementName $ore -ammount ($MinOrePerFuel *$FuelThisRound)
+	Write-Host "Using "($MinOrePerFuel *$FuelThisRound) "Ore, leaving " (GetExtraCount -elementName $ore) "remaining" -foregroundcolor red
+	$tempOre = (GetExtraCount -elementName $ore)
+	
+	for($i= 0; $i -lt $ExtrasPerFuel["elements"].count;$i++)
+	{
+		AddToExtra -elementName $ExtrasPerFuel["elements"][$i] -ammount ($ExtrasPerFuel["amounts"][$i]*$FuelThisRound)
+	}
+	
+	if($debug)
+	{
+		Write-Host "Ammount Pre Conversion" -foregroundcolor darkgreen
+		WriteOutElements -elements ($Extras["elements"]) -ammounts ($Extras["amounts"]) -color darkgreen
+	}
+	
+	do
+	{
+		$oldOreAmmount2 = $Extras["amounts"][$Extras["elements"].IndexOf($ore)]
+		RecurseMakeNonFuelExtraIntoOre -elementName $fuel
+		$newOreAmmount = $Extras["amounts"][$Extras["elements"].IndexOf($ore)]
+	}
+	while($oldOreAmmount2 -ne $newOreAmmount)
+	
+
+	$newFuelAmmount = (GetExtraCount -elementName $fuel)
 	
 	
-	Write-Host "Old Elements" -foregroundcolor cyan
-	WriteOutElements -elements $OldElements -ammounts $OldAmmounts -color cyan
+	Write-Host "Squeezing back " ($newOreAmmount - $tempOre) "Ore, leaving "(GetExtraCount -elementName $ore) "remaining" -foregroundcolor green
 	
-	Write-Host "New Elements" -foregroundcolor yellow
-	WriteOutElements -elements ($Extras["elements"]) -ammounts ($Extras["amounts"]) -color yellow	
+	if($debug)
+	{
+		Write-Host "Old Elements" -foregroundcolor cyan
+		WriteOutElements -elements $OldElements -ammounts $OldAmmounts -color cyan
+		
+		Write-Host "New Elements" -foregroundcolor yellow
+		WriteOutElements -elements ($Extras["elements"]) -ammounts ($Extras["amounts"]) -color yellow
+	}		
 	
 	if($loopCount%$LoopCountOutput -eq 0)
 	{
 		Write-Host "Made " ($newFuelAmmount-$oldFuelAmmount) "Fuel in loop " $loopCount "Total" $newFuelAmmount
 	}
 	$loopCount++
+	
 }
-while(-not (CompareToExtras -elements ($OldElements) -ammounts ($OldAmmounts)))
+while($oldFuelAmmount -ne $newFuelAmmount -or $oldOreAmmount -ne $oldOreAmmount)
 
-Write-Host "Final Count" $oldFuelAmmount
+Write-Host "Final Count" $oldFuelAmmount#>
 
 

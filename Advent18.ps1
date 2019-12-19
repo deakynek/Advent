@@ -24,14 +24,25 @@ function GetAvailableSpaces
 	while(-not (TraveledToAllAvailableSpaces -MapString $MapString -IndexesVisited $IndexesVisited -refIndex ([ref]$index) -PassDoors $PassDoors))
 	{
 		$startingIdx = $index
-		if($ExistingKeysWithSteps.Keys -contains $startingIdx -and $ExistingKeysWithSteps[$startingIdx] -ne $null)
+		if($ExistingKeysWithSteps.Keys -contains $startingIdx -and $ExistingKeysWithSteps[$startingIdx]["steps"] -ne $null)
 		{
-			$steps = $ExistingKeysWithSteps[$startingIdx]
+			$steps = $ExistingKeysWithSteps[$startingIdx]["steps"]
 		}
 		else
 		{
 			$steps = 0
 		}
+		
+		if($ExistingKeysWithSteps.Keys -contains $startingIdx -and $ExistingKeysWithSteps[$startingIdx]["keys"] -ne $null)
+		{
+			$keys = $ExistingKeysWithSteps[$startingIdx]["keys"]
+		}
+		else
+		{
+			$keys = @()
+		}
+		
+		
 		if($debug)
 		{
 			Write-Host "`nReceived $index, starting at"
@@ -77,14 +88,26 @@ function GetAvailableSpaces
 				$IndexesVisited += $NextIdx
 			}
 			
+
+			if($NextCharResult -eq 3 -and $PassDoors)
+			{
+				if($keys -notcontains ($MapStr0[$NextIdx]))
+				{
+					$keys += ([string]($MapStr0[$NextIdx])).ToLower()
+					if($debug)
+					{
+						Write-Host "these keys needed at index $NextIdx :  $keys" 
+					}
+				}
+			}			
 			
 			if(-not ($ExistingKeysWithSteps.Keys -ccontains $NextIdx))
 			{
-				$ExistingKeysWithSteps += @{$NextIdx=$steps}
+				$ExistingKeysWithSteps += @{$NextIdx = @{"steps" = $steps; "keys" = $keys}}
 			}
-			elseif($ExistingKeysWithSteps[$NextIdx] -eq $null)
+			elseif($ExistingKeysWithSteps[$NextIdx]["steps"] -eq $null)
 			{
-				$ExistingKeysWithSteps = $steps
+				$ExistingKeysWithSteps[$NextIdx]["steps"] = $steps
 			}
 			
 			if($NextCharResult -eq 2)
@@ -208,13 +231,16 @@ function GetKeys
 {
 	Param(
 		[Parameter(Mandatory=$true)]
-		[system.collections.hashtable] $ExistingKeysWithSteps
+		[system.collections.hashtable] $ExistingKeysWithSteps,
+		
+		[Parameter(Mandatory=$true)]
+		[System.Collections.ArrayList] $KeysVisited
 		)
 		
-	$keys = @()
+	$keys = [System.Collections.ArrayList]@()
 	foreach($key in $ExistingKeysWithSteps.Keys)
 	{
-		if($key -is [string])
+		if($key -is [string] -and $key -match "^\w$" -and $KeysVisited -notcontains $key)
 		{
 			$keys += $key
 		}
@@ -230,7 +256,7 @@ function GetIndexes
 		[system.collections.hashtable] $ExistingKeysWithSteps
 		)
 		
-	$keys = @()
+	$keys =  [System.Collections.ArrayList]@()
 	foreach($key in $ExistingKeysWithSteps.Keys)
 	{
 		if($key -is [int])
@@ -285,128 +311,145 @@ function RecurseGetMinStepsToAllKeys
 {
 	Param(
 		[Parameter(Mandatory=$true)]
-		[string] $MapString,
+		[string] $Key,
 		
 		[Parameter(Mandatory=$true)]
-		[int] $StartIndex,
-		
-		[Parameter(Mandatory=$true)]
-		[system.collections.hashtable] $ExistingKeysWithSteps,
+		[system.collections.arrayList] $visitedKeys,
 		
 		[Parameter(Mandatory=$true)]
 		[int] $TabCount
-		
 		)
 	
-	Write-Host ($tab*$TabCount)""$TabCount -foregroundcolor green
+	$tab ="`t"
+	if($True)
+	{
+		Write-Host ($tab*$TabCount)"STARTING AT" ($Key) -foregroundcolor CYAN
+	}
+
+	$NextKeyArray = [System.Collections.ArrayList] @(GetKeys -ExistingKeysWithSteps ($StepsHash[$key]) -KeysVisited $visitedKeys)
+	
+	$reqKeys = @()
+	if($FromOriginWithDoorCodes[$MapStr0.IndexOf($key)]["keys"].Count -gt 0)
+	{
+		$reqKeys = $FromOriginWithDoorCodes[$MapStr0.IndexOf($key)]["keys"]
+	}
+	
+	
+	foreach($pastKey in $visitedKeys)
+	{
+		$x = $NextKeyArray.Remove($pastKey)
+	}
+	
 	if($debug)
 	{
-		Write-Host ($tab*$TabCount)"STARTING AT" ($MapStr0[$StartIndex]) -foregroundcolor CYAN
-	}
-	$Spaces = GetAvailableSpaces -MapString $MapString -startingIdx $StartIndex -ExistingKeysWithSteps $ExistingKeysWithSteps -PassDoors $false
-
-	$KeysArray = GetKeys -ExistingKeysWithSteps $Spaces
-	$minSteps = $null
-
-	
-	
-	if($true)
-	{
-		Write-Host ($tab*$TabCount)""$KeysArray -foregroundcolor green
-		Write-Host ($tab*$TabCount)"Remaining Keys"($KeysArray.Count) -foregroundcolor green
+		Write-Host ($tab*$TabCount)"Next Options: "$NextKeyArray -foregroundcolor green
+		Write-Host ($tab*$TabCount)"Keys Already Gotten : "$visitedKeys -foregroundcolor yellow
+		Write-Host ($tab*$TabCount)"Required for $Key : "$reqKeys -foregroundcolor red
+		Write-Host ($tab*$TabCount)"Remaining Keys :"($TotalKeyCount - $visitedKeys.Count) " of $TotalKeyCount total" -foregroundcolor darkred
 	}
 	
-	$tab ="`t"
-	$ind = GetKeyIndex -StartIndex $StartIndex -KeysArray @($KeysArray)
-
-	if($ind -ne $null)
+	foreach($reqKey in $reqKeys)
 	{
-	
-		if($true)
+		if($visitedKeys -notcontains $reqKey)
 		{
-			Write-Host ($tab*$TabCount)""($MapStr0[$StartIndex]) "to $KeysArray predetermined to be " ($StepsHash[($MapStr0[$StartIndex]).ToString()]["$KeysArray"]) -foregroundcolor DarkCyan
+			if($debug)
+			{
+				Write-Host ($tab*$TabCount)"1) Returning NULL" -foregroundcolor red 
+				Write-Host ($tab*$TabCount)"of Type nothing" -foregroundcolor red
+			}
+			return $null
 		}
-		return $StepsHash[($MapStr0[$StartIndex]).ToString()][$ind]
+	}
+
+	
+
+
+	
+	if($NextKeyArray.count -gt 0 -and $visitedKeys.count + $NextKeyArray.count -eq $TotalKeyCount)
+	{	
+		$ind = GetKeyIndex -StartIndex ($MapStr0.IndexOf($key)) -KeysArray @($NextKeyArray)
+		if($ind -ne $null)
+		{
+			if($debug -and ($StepsHash[$Key]["$NextKeyArray"]) -ne $null)
+			{
+				Write-Host ($tab*$TabCount)""($Key) "to $NextKeyArray predetermined to be " ($StepsHash[$Key]["$NextKeyArray"]) -foregroundcolor DarkCyan
+				Write-Host ($tab*$TabCount)"2) Returning " ($StepsHash[$Key]["$NextKeyArray"])  -foregroundcolor red 
+				Write-Host ($tab*$TabCount)"of Type " ($StepsHash[$Key]["$NextKeyArray"]).GetType() -foregroundcolor red	
+			}
+
+			return $StepsHash[$Key]["$NextKeyArray"]
+		}
 	}
 	
-	
-
-
-	if($KeysArray.Count -gt 1)
+	$minSteps = $null
+	$NewSteps = 0
+	if($NextKeyArray.Count -gt 0)
 	{
-		
-		foreach($key in $KeysArray)
+		if($NextKeyArray.Count -eq 1 -and ($visitedKeys.count) -eq ($TotalKeyCount))
 		{
-			$baseSteps = $StepsHash[($MapStr0[$StartIndex]).ToString()][$key]
-			if($minSteps -ne $null -and $baseSteps -gt $minSteps)
+			if($debug)
+			{
+				Write-Host ($tab*$TabCount)"3) Returning " ($StepsHash[$key][$NextKeyArray[0]])  -foregroundcolor red 
+				Write-Host ($tab*$TabCount)"of Type " ($StepsHash[$key][$NextKeyArray[0]]).GetType() -foregroundcolor red	
+			}
+			return $StepsHash[$key][$NextKeyArray[0]]
+		}
+	
+		foreach($nextKey in $NextKeyArray)
+		{
+			$x = $visitedKeys.Add($nextKey)
+			$baseSteps = $StepsHash[$key][$nextKey]
+			
+			if($debug -and $baseSteps -ne $null)
+			{
+				Write-Host ($tab*$TabCount)"Steps From $key to $nextKey : $baseSteps"
+				Write-Host ($tab*$TabCount)"Type baseSteps =" ($baseSteps.GetType())
+			}
+			
+			
+			$NewSteps = RecurseGetMinStepsToAllKeys -Key $nextKey -visitedKeys $visitedKeys -TabCount ($TabCount+1)
+			
+			if($debug -and $NewSteps -ne $null)
+			{			
+				Write-Host ($tab*$TabCount)"Steps Returned: $NewSteps"
+				Write-Host ($tab*$TabCount)"Type returned steps =" ($NewSteps.GetType())
+			}
+			
+			
+			$x = $visitedKeys.Remove($nextKey)
+			if($NewSteps -eq $null)
 			{
 				continue
 			}
 			
-			$tempMapStr = "$MapString"
-			
-			
-			$NewKeySteps = $Spaces.Clone()
-			$NewKeySteps.Remove($key) 
-			
-			
-			
-			$indexOfKey = $tempMapStr.IndexOf($key)
-			$indexOfDoor = $tempMapStr.IndexOf($key.ToUpper())
-			
-			if($true)
-			{
-				Write-Host "Newly Available Keys after removing $key :   " (GetKeys -ExistingKeysWithSteps $NewKeySteps)
-				Write-Host ($tab*$TabCount)"$baseSteps steps from " ($MapStr0[$StartIndex]) "to" $key
-				Write-Host "key" $key
-				Write-Host "Key Pos"
-				PrintIndexInCoordinates -Index $indexOfKey
-				Write-Host "Door Pos"
-				PrintIndexInCoordinates -Index $indexOfDoor
-			}
-			
-			
-			$NewMapStr = $tempMapStr.Remove($indexOfKey,1).Insert($indexOfKey,".")
-			
-			if($indexOfDoor -ne -1)
-			{
-				$NewMapStr = $NewMapStr.Remove($indexOfDoor,1).Insert($indexOfDoor,".")
-			}
-			
-			$steps = RecurseGetMinStepsToAllKeys -MapString $NewMapStr -StartIndex $indexOfKey -TabCount ($TabCount+1) -ExistingKeysWithSteps $NewKeySteps
-			$TotalSteps = $baseSteps + $steps
-			
-			
-			
-			if($TotalSteps -ne $null -and ($minSteps -eq $null -or $TotalSteps -lt $minSteps))
+			$TotalSteps = $baseSteps + $NewSteps
+			if($minSteps -eq $null -or $TotalSteps -lt $minSteps)
 			{
 				$minSteps = $TotalSteps
 			}
-			
-			if($true)
-			{
-				Write-Host ($tab*$TabCount)"This Steps "$steps
-				Write-Host ($tab*$TabCount)"Base Steps "$baseSteps
-				Write-Host ($tab*$TabCount)"TotalSteps Steps "$TotalSteps
-				Write-Host ($tab*$TabCount)"MinSteps " $minSteps
-			}
 		}
-		
-		if($minSteps -ne $null)
-		{
-			$StepsHash[($MapStr0[$StartIndex]).ToString()] += @{"$KeysArray" = $minSteps}
-		}
-		return $minSteps
-		
-	}
-	elseif(($KeysArray.Count -eq 1))
-	{
-		return $StepsHash[($MapStr0[$StartIndex]).ToString()][$KeysArray[0]]
 	}
 	else
 	{
-		return $null
+		if($debug -and $NewSteps -ne $null)
+		{
+			Write-Host ($tab*$TabCount)"4) Returning " (0) -foregroundcolor red
+			Write-Host ($tab*$TabCount)"of Type Int"  -foregroundcolor red	
+		}
+		return 0
 	}
+	
+	if($NextKeyArray.Count -ne 1)
+	{
+		$StepsHash[$Key] += @{"$NextKeyArray" = $minSteps}
+	}
+	
+	if($debug -and $minSteps -ne $null)
+	{
+		Write-Host ($tab*$TabCount)"5) Returning " ($minSteps) -foregroundcolor red
+		Write-Host ($tab*$TabCount)"of Type " ($minSteps.GetType()) -foregroundcolor red
+	}
+	return ($minSteps)
 }
 
 function GetMinStepsFromOrigin
@@ -456,6 +499,93 @@ function PrintIndexInCoordinates
 		
 }
 
+function RecurseGetAllPossibleCombinations
+{
+	Param(
+		[Parameter(Mandatory=$true)]
+		[string] $string
+		)
+	
+	
+	$output = ("`t")*($AllKeys.Count - $string.length)
+	Write-Host "$output" ($string.length)
+	if($string.length -eq 0)
+	{
+		return @()
+	}	
+	if($string.length -eq 1)
+	{
+		return @($string)
+	}
+
+	$combos = @()
+	for($i = 0; $i -lt $string.length; $i++)
+	{
+		$starter = $string.Substring($i,1)
+		if($starter -ne $string -and $i -ne ($string.length -1))
+		{
+			$rest = $string.Remove($i,1)
+			
+			
+			
+			if($InvalidSubStringHash[$starter] -contains $rest)
+			{
+				continue
+			}
+			
+			$req = $FromOriginWithDoorCodes[$MapStr0.IndexOf($starter)]["keys"]
+			
+			if($req.count -gt 0)
+			{
+				$stringreq = "$req"
+				if($rest -match "[$stringreq]")
+				{
+					$InvalidSubStringHash[$starter] += @($rest)
+					continue
+				}
+			}
+		}
+		
+		
+		$otherCharCombos = RecurseGetAllPossibleCombinations -string $string.Remove($i,1)
+		
+		
+		foreach($combo in $otherCharCombos)
+		{
+			$combos += @($starter+$combo)
+		}
+	}
+	
+	return $combos
+
+}
+
+function ValidateCombo
+{
+	Param(
+		[Parameter(Mandatory=$true)]
+		[string] $combination
+		)
+		
+	for($i = 0; $i -lt $combination.length; $i++)
+	{
+		$req = $FromOriginWithDoorCodes[$MapStr0.IndexOf($combination.Substring($i,1))]["keys"]
+		if($i -lt $req.count)
+		{
+			return $false
+		}
+		
+		foreach($reqKey in $req)
+		{
+			if($combination.Substring(0,($i)) -notmatch $reqKey)
+			{
+				return $false
+			}
+		}
+	}
+	
+	return $true
+}
 
 <#Parse Input#>
 $file = Get-Content Advent18_input.txt
@@ -479,73 +609,145 @@ Write-Host "HEIGHT: $Height WIDTH: $Width"
 Write-Host "Start Pos ("$StartHeight","$StartWidth")"
 
 $AvaiableSpacesWithSteps = New-Object system.collections.hashtable
-$AvaiableSpacesWithSteps += @{$StartIndex = 0}
+$AvaiableSpacesWithSteps += @{$StartIndex = @{"steps" =0;"keys" = @()}}
 
 $IndexesVisitedFromStart = @($StartIndex)
-$FromOrigin = GetAvailableSpaces -MapString $MapStr -startingIdx $StartIndex -ExistingKeysWithSteps $AvaiableSpacesWithSteps  -PassDoors $False 
+$FromOriginWithDoorCodes = GetAvailableSpaces -MapString $MapStr -startingIdx $StartIndex -ExistingKeysWithSteps $AvaiableSpacesWithSteps  -PassDoors $True 
 
 
 Write-Host "Indexes from start = " $IndexesVisitedFromStart
 
 
-Write-Host "Keys = " ($FromOrigin.Keys)
-foreach($key in $FromOrigin.Keys)
+Write-Host "Keys = " ($FromOriginWithDoorCodes.Keys)
+foreach($key in $FromOriginWithDoorCodes.Keys)
 {
-	if($key -is [int])
+	<#if($key -is [int])
 	{
 		$StartHeight = [math]::floor($key/$Width)
 		$StartWidth = $key%$Width
-		Write-Host "Index ("$StartWidth","$StartHeight") is "($FromOrigin[$key])" steps away"
-	}
-	elseif($key -is [string])
+		Write-Host "Index ("$StartWidth","$StartHeight") is "($FromOriginWithDoorCodes[$key]["steps"])" steps away"
+		$k = ($FromOriginWithDoorCodes[$key]["keys"])
+		Write-Host "And Requires these keys" ("$k")
+	}#>
+	if($key -is [string])
 	{
-		Write-Host "Key $key is "($FromOrigin[$key])" steps away"
+		Write-Host "`nKey $key is "($FromOriginWithDoorCodes[$key])" steps away from origin"
+		$req = $FromOriginWithDoorCodes[$MapStr0.IndexOf($key)]["keys"]
+		Write-Host "`tAnd requires these Keys: $req"
 	}
 }
 pause
 
 $ofs = ""
 $StepsHash = @{}
+$StepsHash += @{"@" = (GetAvailableSpaces -MapString $MapStr -startingIdx $StartIndex -ExistingKeysWithSteps $AvaiableSpacesWithSteps  -PassDoors $false )}
 
-foreach($key in ($MapStr | Select-String "[a-z]" -AllMatches -CaseSensitive).Matches.Value)
+$TotalKeyCount = 1
+$AllKeys = ($MapStr | Select-String "[a-z]" -AllMatches -CaseSensitive).Matches.Value
+
+$AllKeys = $AllKeys | Sort-Object{$FromOriginWithDoorCodes[$MapStr0.IndexOf($_)]["keys"].Count} -Descending
+
+$InvalidSubStringHash = @{}
+foreach($key in $AllKeys)
 {
-	$indexOfKey = $MapStr0.IndexOf($key)	
+	$indexOfKey = $MapStr0.IndexOf($key)
+	$MapStr1 = $MapStr.Remove($indexOfKey,1).Insert($indexOfKey,".")
+	
+	$indexOfDoor = $MapStr0.IndexOf($key.ToUpper)
+	if($indexOfDoor -ne -1)
+	{
+		$MapStr1 = $MapStr1.Remove($indexOfDoor,1).Insert($indexOfDoor,".")
+	}
+	
 	$AvaiableSpacesWithSteps = New-Object system.collections.hashtable
-	$AvaiableSpacesWithSteps += @{$indexOfKey = 0}
+	$AvaiableSpacesWithSteps += @{$indexOfKey = @{"steps"=0; "keys" =@()}}
 	
 	
 	Write-Host $key -foregroundcolor green
-	$StepsHash += @{$key = (GetAvailableSpaces -MapString $MapStr -startingIdx $indexOfKey -ExistingKeysWithSteps $AvaiableSpacesWithSteps -PassDoors $true)}
+	$StepsHash += @{$key = (GetAvailableSpaces -MapString $MapStr1 -startingIdx $indexOfKey -ExistingKeysWithSteps $AvaiableSpacesWithSteps -PassDoors $true)}
+	$InvalidSubStringHash = @{$key = @()}
+	$TotalKeyCount++
 }
 
-foreach($hashkey in $StepsHash["i"].Keys)
+
+
+foreach($key in $StepsHash.Keys)
 {
-	if($hashkey -is [string])
+	Write-Host "`nLooking at Key $key" -foregroundcolor green 
+	if($FromOriginWithDoorCodes[$MapStr0.IndexOf($key)]["keys"].Count -gt 0)
 	{
-		Write-Host "Key $hashkey is "($StepsHash["a"][$hashkey])" steps away from key i"
+		$reqKeys = $FromOriginWithDoorCodes[$MapStr0.IndexOf($key)]["keys"]
+		Write-Host "`t(Requires these keys first) $reqKeys" -foregroundcolor red
+	}
+	
+	foreach($hashkey in $StepsHash[$key].Keys)
+	{
+		if($hashkey -is [string])
+		{
+			Write-Host "`tKey $hashkey is "($StepsHash[$key][$hashkey])" steps away"
+		}
 	}
 }
-
-foreach($hashkey in $StepsHash["j"].Keys)
-{
-	if($hashkey -is [string])
-	{
-		Write-Host "Key $hashkey is "($StepsHash["a"][$hashkey])" steps away from key j"
-	}
-}
-
-foreach($hashkey in $StepsHash["a"].Keys)
-{
-	if($hashkey -is [string])
-	{
-		Write-Host "Key $hashkey is "($StepsHash["a"][$hashkey])" steps away from key a"
-	}
-}
-
-GetKeys $StepsHash["a"]
 
 pause
 
+Write-Host "AllKeys : " "$AllKeys"
+$allCombos = RecurseGetAllPossibleCombinations -string "$AllKeys"
+Write-Host "Of "($allCombos.count)" Possible combinations"
 
-$steps = GetMinStepsFromOrigin
-Write-Host "Guess at min steps is" $steps
+$validCombos = @()
+
+foreach($combo in $allCombos)
+{
+	if(ValidateCombo -combination $combo)
+	{
+		$validCombos += "@"+$combo
+	}
+}
+
+
+
+Write-Host "Only" ($validCombos.count) "are valid"
+
+$minSteps = $null
+$MinCombos = @()
+foreach($combo in $validCombos)
+{
+	$RunningTotal = 0
+	$possible = $true
+	for($i = 1; $i -lt $combo.length; $i++)
+	{
+		$RunningTotal += $StepsHash[$combo.Substring($i - 1,1)][$combo.Substring($i,1)]
+		
+		if($minSteps  -ne $null -and $RunningTotal -gt $minSteps)
+		{
+			$possible = $false
+			break
+		}
+	}
+	
+	if(!$possible)
+	{
+		continue
+	}
+	
+	if($minSteps  -eq $null -or $RunningTotal -lt $minSteps)
+	{
+		$MinCombos = @($combo)
+		$minSteps = $RunningTotal
+	}
+	elseif ($RunningTotal -eq $minSteps)
+	{
+		$MinCombos += @($combo)
+	}
+}
+
+Write-Host "Of the valid combinations, only "($MinCombos.count) "have the minimum steps of " $minSteps
+Write-Host "They are:"
+$MinCombos
+
+
+<#
+$visitedKeys = [System.collections.ArrayList]@("@")
+$steps = RecurseGetMinStepsToAllKeys -Key "@" -VisitedKeys $visitedKeys -TabCount 0#>
+Write-Host "Guess at min steps is" $minSteps

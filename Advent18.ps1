@@ -493,8 +493,11 @@ function GetMinStepsFromOrigin
 	foreach($key in (GetKeys -ExistingKeysWithSteps $FromOrigin -KeysVisited $visited))
 	{
 		$BaseSteps = $FromOrigin[$key]
+		Write-Host "$baseSteps from origin to $key"
 		
 		$ExtraSteps = $StepsHash[$key][$stringOfAllKeys.Remove($stringOfAllKeys.IndexOf($key),1)]
+		Write-Host "$ExtraSteps from $key to last Key"
+		
 		if($ExtraSteps -ne $null -and ($minsteps -eq $null -or ($BaseSteps +$ExtraSteps) -lt $minsteps))
 		{
 			$minSteps = ($BaseSteps +$ExtraSteps)
@@ -591,15 +594,16 @@ function RecurseGetAllPossibleCombinations
 					$PrevMin = $StepsHash[$rest.Substring($j,1)][$rest.Remove($j,1)]
 					if($PrevMin -ne $null)
 					{
+						Write-Host "Previous minimum from "($rest.Substring($j,1))" with these keys remaining "($rest.Remove($j,1))"was $PrevMin" 
 						$steps = $StepsHash[$starter][$rest.Substring($j,1)] + $PrevMin
-						
-						if($minsteps -eq $null -or $steps -lt $minsteps)
+						Write-Host "Steps from $starter to " ($rest.Substring($j,1)) "is "($StepsHash[$starter][$rest.Substring($j,1)])
+						if($minsteps -eq $null -or ($steps) -lt $minsteps)
 						{
-							$minSteps = $steps
+							$minSteps = ($steps)
 						}
 					}
 				}
-				
+				Write-Host "Minimum from $starter to $rest is $minSteps steps"
 				if($minsteps -ne $null)
 				{
 					if($debug)
@@ -744,7 +748,7 @@ foreach($key in $StepsHash.Keys)
 	}
 }
 
-pause@
+pause
 
 $TempCombos = @{}
 RecurseGetAllPossibleCombinations -string "$AllKeys" -TabCount 0

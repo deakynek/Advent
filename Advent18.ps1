@@ -781,7 +781,7 @@ function RecurseFindMinStepsWith4RobotsBasedOnKeyCombo
 							$steps = $StepsHash[$starter][$ThisRobotLastIndex]["steps"] + $PrevMin
 							if($debug)
 							{
-								Write-Host "$t $StarterRobot Steps $starter -> " ($ThisRobotLastIndex) ": "($StepsHash[$starter][$ThisRobotLastIndex]["steps"])				
+								Write-Host "$t $StarterRobot Steps $starter -> " ($ThisRobotLastIndex) ": "($StepsHash[$starter][$ThisRobotLastIndex]["steps"]) -foregroundcolor darkgreen				
 							}
 						}
 						else
@@ -816,7 +816,7 @@ function RecurseFindMinStepsWith4RobotsBasedOnKeyCombo
 
 				if($debug)
 				{
-					Write-Host "$t setting Minsteps from $starter for $rest to $steps" -foregroundcolor yellow
+					Write-Host "$t setting Minsteps from $starter for $rest to $steps, Last Pos TR:"($minPos["TR"])" TL:"($minPos["TL"])" BR:"($minPos["BR"])" BL:"($minPos["BL"]) -foregroundcolor yellow
 				}
 				$StepsHash[$starter][$rest] = @{"steps" = $minsteps; "TL"= $minPos["TL"];"TR"=$minPos["TR"];"BL"=$minPos["BL"];"BR"=$minPos["BR"]}
 			}
@@ -871,11 +871,12 @@ function GetMinStepsFor4Robots
 		
 			$otherRobotLastPos = $StepsHash[$key][$rest]["$robot"]
 			
-			$otherRobotSteps += $StepsHash[$robot][$otherRobotLastPos]
+			$thisRobotSteps = $StepsHash[$robot][$otherRobotLastPos]
 			if($debug)
 			{
-				Write-Host "$robot origin -> $otherRobotLastPos : $otherRobotSteps" -foregroundcolor cyan
+				Write-Host "$robot origin -> $otherRobotLastPos : $thisRobotSteps" -foregroundcolor cyan
 			}
+			$otherRobotSteps += $thisRobotSteps
 			
 		}
 		
@@ -886,8 +887,8 @@ function GetMinStepsFor4Robots
 		
 		if($debug)
 		{
-			Write-Host "origin -> $key : $baseSteps"
 			Write-Host "Min $key -> $rest : $PreviousSteps"
+			Write-Host "Total: $TotalSteps" -foregroundcolor red
 		}
 		
 		if($PreviousEntry -ne $null -and ($minsteps -eq $null -or $TotalSteps -lt $minsteps))
@@ -1119,6 +1120,7 @@ foreach($key in $AllKeys)
 	$InvalidSubStringHash = @{$key = @()}
 	
 	$hashKeys = @($StepsHash[$key].Keys)
+	$RobotForThisKey = WhoseKeyIsThisKey $key
 	foreach($foundKey in $hashKeys)
 	{
 		if($foundKey -notmatch "^\w$")
@@ -1126,17 +1128,13 @@ foreach($key in $AllKeys)
 			continue
 		}
 	
-		Write-Host "Editting $foundKey" -foregroundcolor yellow
 		$steps = $StepsHash[$key][$foundKey]
-		$RobotForThisKey = WhoseKeyIsThisKey $foundKey
-		
-		Write-Host "Prev Key steps: " ($StepsHash[$key][$foundKey])
+
 		$StepsHash[$key].Remove($foundKey)
-		Write-Host "Test Key steps: " ($StepsHash[$key][$foundKey])
 		
 		$StepsHash[$key] += @{$foundKey = @{"steps" = $steps; "TL"=$null; "TR"=$null;  "BR"=$null;  "BL"=$null}}
 		
-		$StepsHash[$key][$foundKey][$RobotForThisKey] = $foundKey
+		$StepsHash[$key][$foundKey][$RobotForThisKey] = $key
 	}
 	$req = $FromOriginWithDoorCodes[$MapStr0.IndexOf($key)]["keys"]
 	foreach($reqKey in $req)
@@ -1158,6 +1156,7 @@ foreach($key in $AllKeys)
 			$StepsHash[$key] += @{$otherRobotKey = @{"steps" = 0; "TL"=$null; "TR"=$null;  "BR"=$null;  "BL"=$null}}
 			$OtherRobotPos = WhoseKeyIsThisKey $otherRobotKey
 			$StepsHash[$key][$otherRobotKey][$OtherRobotPos] = $otherRobotKey
+			$StepsHash[$key][$otherRobotKey][$RobotForThisKey] = $key
 		}
 	}
 	
@@ -1196,6 +1195,7 @@ foreach($key in $StepsHash.Keys)
 pause
 $debug = $false
 RecurseFindMinStepsWith4RobotsBasedOnKeyCombo -string "$AllKeys" -TabCount 1
+$debug = $true
 $steps = GetMinStepsFor4Robots
 
-Write-Host "`nGuess at min steps is" $steps
+Write-Host "`nGuess at min steps is" $steps -foregroundcolor yellow

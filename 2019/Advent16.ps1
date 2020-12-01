@@ -97,6 +97,7 @@ Write-Host "Offset: "$offset
 
 $count = 1
 $Input = @($Input0)
+$Additives = @($Input0)
 while($count -le 100)
 {
 
@@ -106,30 +107,35 @@ while($count -le 100)
 		if($i -gt $Input.count/2)
 		{
 			$Input[$i] = [math]::abs(($Input[$i+1] +$Input[$i])%10)
+			$Additives[$i] = 0
 		}
 		else
 		{
-	
-			$mult = @(0,1,0,-1)
 			$additive = 0
 			$count = 0
-			$MultIndex = 0
-			for($j = ($i); $j -lt $InputCopy.count; $j++)
+			$Last = $Input[$i+1] - $Additives[$i-1]
+			$mult = -1
+			
+			for($j = ($i); $j -lt $InputCopy.count; $j += ($i+1))
 			{
-				if($count%($i+1) -eq 0)
-				{
-					$MultIndex = ($MultIndex+1)%$mult.count
-				}
-				$additive += $mult[$MultIndex]*$InputCopy[$j]
+				$additive += $mult*($InputCopy[$j] - $Additives[$j])
 				
-				$count++
+				if($count++ % 2 -eq 0)
+				{
+					$mult = $mult * -1
+				}
 			}
 			
-			$Input[$i] = [math]::abs(($additive)%10)
+			$Input[$i] += $Last + $additive
+			$Additives[$i] = $additive
 		}
-
+		
 	}
 	
+	for($i = ($Input.count-2); $i -ge $offset; $i--)
+	{	
+		$Input[$i] = [math]::abs(($Input[$i])%10)
+	}
 	
 
 	Write-Host "LOOP" $count

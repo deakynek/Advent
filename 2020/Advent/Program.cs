@@ -20,20 +20,15 @@ namespace Advent
             var Finder = new SumFinder(lines.ToList<string>());
 
             var start = DateTime.UtcNow;
-            Finder.PrintMultOfNNumbersSummingToValue("Sum 2", 2020, 2);
-            PrintElapsedTime("Sum 2", start);
 
-            start = DateTime.UtcNow;
-            Finder.PrintMultOfNNumbersSummingToValue("Sum 3", 2020,3);
-            PrintElapsedTime("Sum 3", start);
+            var ns = new List<int>(){2,3,4,5,6,7,8,9,10};
+            foreach(var n in ns)
+            {
+                start = DateTime.UtcNow;
+                Finder.PrintMultOfNNumbersSummingToValue("Sum "+n.ToString(), 5000, n);
+                PrintElapsedTime("Sum "+n.ToString(), start);
 
-            start = DateTime.UtcNow;
-            Finder.PrintMultOfNNumbersSummingToValue("Sum 4", 2020, 4);
-            PrintElapsedTime("Sum 4", start);
-
-            start = DateTime.UtcNow;
-            Finder.PrintMultOfNNumbersSummingToValue("Sum 5", 2020, 5);
-            PrintElapsedTime("Sum 5", start);           
+            }     
         }
 
         static private void PrintElapsedTime(string operation, DateTime start)

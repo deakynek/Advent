@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Diagnostics;
-using System.IO;
 
 
 namespace Advent
@@ -57,9 +54,7 @@ namespace Advent
                 {
                     if(entry == remainingSum)
                     {
-                        var list = new List<int>();
-                        list.Add(entry);
-                        return list;
+                        return new List<int>(){entry};
                     }
                 }
 
@@ -79,9 +74,9 @@ namespace Advent
                 return;            
             }
 
-            var mult = 1;
+            Int64 mult = 1;
             numberList.ForEach(num => mult *= num);
-            var output = opText +": "+ mult.ToString();
+            var output = opText +": "+ mult.ToString() +" =\t\t" + string.Join(" * ", numberList);
             Console.WriteLine(output);
         }
 

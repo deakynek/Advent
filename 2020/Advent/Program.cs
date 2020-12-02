@@ -14,21 +14,30 @@ namespace Advent
         static void Main(string[] args)
         {
 
+            int day = 2;
+            string[] lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}\Advent{0}Input.txt",day));
 
-            string[] lines = System.IO.File.ReadAllLines(@".\Advent1\Advent1Input.txt");
-
-            var Finder = new SumFinder(lines.ToList<string>());
-
-            var start = DateTime.UtcNow;
-
-            var ns = new List<int>(){2,3,4,5,6,7,8,9,10};
-            foreach(var n in ns)
+            if(day == 1)
             {
-                start = DateTime.UtcNow;
-                Finder.PrintMultOfNNumbersSummingToValue("Sum "+n.ToString(), 5000, n);
-                PrintElapsedTime("Sum "+n.ToString(), start);
+                var Finder = new SumFinder(lines.ToList<string>());
 
-            }     
+                var start = DateTime.UtcNow;
+
+                var ns = new List<int>(){2,3,4,5,6,7,8,9,10};
+                foreach(var n in ns)
+                {
+                    start = DateTime.UtcNow;
+                    Finder.PrintMultOfNNumbersSummingToValue("Sum "+n.ToString(), 5000, n);
+                    PrintElapsedTime("Sum "+n.ToString(), start);
+
+                }
+            }
+            else if(day == 2)
+            {
+                var passwordParsed = new PasswordParser(lines.ToList<string>());
+                Console.WriteLine(String.Format("{0} Valid passwords found by range", passwordParsed.FindValidPasswordCountByRange()));
+                Console.WriteLine(String.Format("{0} Valid passwords found by position", passwordParsed.FindValidPasswordCountByPosition()));
+            }
         }
 
         static private void PrintElapsedTime(string operation, DateTime start)

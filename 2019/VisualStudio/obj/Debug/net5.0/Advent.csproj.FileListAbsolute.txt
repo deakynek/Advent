@@ -1,0 +1,16 @@
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\bin\Debug\net5.0\Advent.exe
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\bin\Debug\net5.0\Advent.deps.json
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\bin\Debug\net5.0\Advent.runtimeconfig.json
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\bin\Debug\net5.0\Advent.runtimeconfig.dev.json
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\bin\Debug\net5.0\Advent.dll
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\bin\Debug\net5.0\ref\Advent.dll
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\bin\Debug\net5.0\Advent.pdb
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\obj\Debug\net5.0\Advent.csprojAssemblyReference.cache
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\obj\Debug\net5.0\Advent.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\obj\Debug\net5.0\Advent.AssemblyInfoInputs.cache
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\obj\Debug\net5.0\Advent.AssemblyInfo.cs
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\obj\Debug\net5.0\Advent.csproj.CoreCompileInputs.cache
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\obj\Debug\net5.0\Advent.dll
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\obj\Debug\net5.0\ref\Advent.dll
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\obj\Debug\net5.0\Advent.pdb
+C:\Users\Karl\Documents\Advent\2019\VisualStudio\obj\Debug\net5.0\Advent.genruntimeconfig.cache

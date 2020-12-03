@@ -14,13 +14,13 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 2;
-            string[] lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}\Advent{0}Input.txt",day));
+            int day = 3;
+            var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}\Advent{0}Input.txt",day)).ToList<string>();
 
             switch(day)
             {
                 case 1:
-                    var Finder = new SumFinder(lines.ToList<string>());
+                    var Finder = new SumFinder(lines);
 
                     var start = DateTime.UtcNow;
 
@@ -35,11 +35,16 @@ namespace Advent
                     break;
 
                 case 2: 
-                    var passwordParsed = new PasswordParser(lines.ToList<string>());
+                    var passwordParsed = new PasswordParser(lines);
                     Console.WriteLine(String.Format("{0} Valid passwords found by range", passwordParsed.FindValidPasswordCountByRange()));
                     Console.WriteLine(String.Format("{0} Valid passwords found by position", passwordParsed.FindValidPasswordCountByPosition()));
                     break;
                 case 3:
+                    var skiing = new Skiing(lines);
+                    var trees =  skiing.Part1_GetAndPrintTrees(3,1);
+                    skiing.Part2_PrintTreeCount();
+                    break;
+                    
                 case 4:
                 case 5:
                     break;

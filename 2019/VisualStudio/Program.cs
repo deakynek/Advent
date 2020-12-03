@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 4;
+            int day = 5;
             var lines = (System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day))).ToList<string>();
 
 
@@ -45,6 +45,16 @@ namespace Advent
                     password.PrintValidPasswordCount(2);
                     break;
                 case 5:
+                    comp = new IntComputer(lines);
+
+                    Console.WriteLine("\nPart 1");
+                    comp.SetInputs(new List<int>(){1});
+                    comp.RunProgram(false);
+
+                    Console.WriteLine("\nPart 2");
+                    comp.ResetProgram();
+                    comp.SetInputs(new List<int>(){5});
+                    comp.RunProgram(false);
                     break;
                 
                 default:

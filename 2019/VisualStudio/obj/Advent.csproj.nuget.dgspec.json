@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Karl\\Documents\\Advent\\2019\\VisualStudio\\Advent.csproj": {}
+    "C:\\Users\\DeepThought\\Documents\\AdventCode\\2019\\VisualStudio\\Advent.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Karl\\Documents\\Advent\\2019\\VisualStudio\\Advent.csproj": {
+    "C:\\Users\\DeepThought\\Documents\\AdventCode\\2019\\VisualStudio\\Advent.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Karl\\Documents\\Advent\\2019\\VisualStudio\\Advent.csproj",
+        "projectUniqueName": "C:\\Users\\DeepThought\\Documents\\AdventCode\\2019\\VisualStudio\\Advent.csproj",
         "projectName": "Advent",
-        "projectPath": "C:\\Users\\Karl\\Documents\\Advent\\2019\\VisualStudio\\Advent.csproj",
-        "packagesPath": "C:\\Users\\Karl\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Karl\\Documents\\Advent\\2019\\VisualStudio\\obj\\",
+        "projectPath": "C:\\Users\\DeepThought\\Documents\\AdventCode\\2019\\VisualStudio\\Advent.csproj",
+        "packagesPath": "C:\\Users\\DeepThought\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\DeepThought\\Documents\\AdventCode\\2019\\VisualStudio\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Karl\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\DeepThought\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net5.0"

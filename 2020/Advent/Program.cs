@@ -15,7 +15,7 @@ namespace Advent
         {
 
             int day = 4;
-            var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}\Advent{0}Input.txt",day)).ToList<string>();
+            var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day)).ToList<string>();
 
             switch(day)
             {

@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 5;
+            int day = 7;
             var lines = (System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day))).ToList<string>();
 
 
@@ -29,7 +29,7 @@ namespace Advent
                 case 2: 
                     var comp = new IntComputer(lines);
                     comp.UpdateInitials(12,2);
-                    comp.RunProgram(true);
+                    comp.RunProgram(0,true);
 
                     comp.FindInputsThatProduceValue(19690720);
                     
@@ -49,14 +49,25 @@ namespace Advent
 
                     Console.WriteLine("\nPart 1");
                     comp.SetInputs(new List<int>(){1});
-                    comp.RunProgram(false);
+                    comp.RunProgram(0,false);
 
                     Console.WriteLine("\nPart 2");
                     comp.ResetProgram();
                     comp.SetInputs(new List<int>(){5});
-                    comp.RunProgram(false);
+                    comp.RunProgram(0,false);
                     break;
                 
+                case 6:
+                    var orbits = new Orbits(lines);
+                    orbits.PrintTotalDirectAndIndirectOrbits();
+                    orbits.PrintOrbitalTransfersToSanta();
+                    break;
+
+                case 7:
+                    var engines = new EngineThrusters(lines);
+                    //engines.RunThroughPossibleCombos();
+                    engines.RunThroughPossibleCombosWithFeedback();
+                    break;
                 default:
                     break;
             }

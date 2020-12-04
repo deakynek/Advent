@@ -1,10 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Diagnostics;
-using System.IO;
-using System.Threading;
 
 
 namespace Advent
@@ -15,8 +11,12 @@ namespace Advent
         List<int> InitialInstructions = new List<int>();
 
         List<int> Inputs = new List<int>();
-        int inputIndex = 0;
-
+        public int inputIndex = 0;
+        public int lastOutput=0;
+        bool stopOnOutput = false;
+        public bool programComplete = false;    
+        public int nextStepIndex = 0;
+        public bool debugMessages = false;
         public IntComputer(List<string> input)
         {
             var separated = input[0].Split(',');
@@ -39,9 +39,19 @@ namespace Advent
             inputIndex = 0;
         }
 
+        public void AddInput(int input)
+        {
+            Inputs.Add(input);
+        }
+
         public void ResetProgram()
         {
             Instructions = InitialInstructions.Select(x =>x).ToList<int>();
+            programComplete = false;
+            stopOnOutput = false;
+            inputIndex = 0;
+            Inputs = new List<int>();
+            nextStepIndex =0;
         }
 
         public void FindInputsThatProduceValue(int val)
@@ -56,7 +66,7 @@ namespace Advent
                 {
                     ResetProgram();
                     UpdateInitials(a,b);
-                    RunProgram(false);
+                    RunProgram(0,false);
 
                     found = Instructions[0] == val;
                     if(found)
@@ -78,9 +88,9 @@ namespace Advent
 
         }
 
-        public void RunProgram(bool print)
+        public void RunProgram(int? index, bool print, bool pauseOnOutput = false )
         {
-            int? index = 0;
+            stopOnOutput = pauseOnOutput;
             while(index != null)
             {
                 index = RunOp(index.Value);
@@ -143,6 +153,11 @@ namespace Advent
                     break;
                 case 4:
                     OutputOp(op1);
+                    if(stopOnOutput)
+                    {
+                        nextStepIndex = index += numOfOperands;
+                        return null;
+                    }
                     break;
 
                 case 5:
@@ -193,6 +208,7 @@ namespace Advent
                     break;
 
                 case 99:
+                    programComplete = true;
                     return null;
                 default:
                     return null;
@@ -265,13 +281,19 @@ namespace Advent
                 else
                 {
                     input = Inputs[inputIndex];
-                    Console.WriteLine(String.Format("Using preset Input: {0}",input));
+                    if(debugMessages)
+                        Console.WriteLine(String.Format("Using preset Input: {0}",input));
                     inputIndex++;
                 }
 
             }
 
             Instructions[outputAddr.Value] = input.Value;
+        }
+
+        public int GetLastOutput()
+        {
+            return lastOutput;
         }
 
         private void OutputOp(int? infoAddr)
@@ -282,7 +304,9 @@ namespace Advent
                 return;
             }
 
-            Console.WriteLine(String.Format("Output Command: {0}",infoAddr.Value));
+            lastOutput = infoAddr.Value;
+            if(debugMessages)
+                Console.WriteLine(String.Format("Output Command: {0}",infoAddr.Value));
         }        
     }
 }

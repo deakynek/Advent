@@ -14,8 +14,8 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 3;
-            var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}\Advent{0}Input.txt",day)).ToList<string>();
+            int day = 5;
+            var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day)).ToList<string>();
 
             switch(day)
             {
@@ -46,7 +46,12 @@ namespace Advent
                     break;
                     
                 case 4:
+                    var passValidator = new PassPortVerification(lines);
+                    passValidator.ValidatePassPortsPrintInvalid();
+                    break;
                 case 5:
+                    var seatFinder = new SeatFinder(lines);
+                    seatFinder.GetTicketIds();
                     break;
                 
                 default:

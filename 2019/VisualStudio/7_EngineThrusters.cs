@@ -48,11 +48,11 @@ namespace Advent
             Console.WriteLine("Maximum Thrust : {0}", maxThrust);
         }
 
-        private int RecurseCombos(List<int> currentSet, List<int> remainingOptions)
+        private long RecurseCombos(List<int> currentSet, List<int> remainingOptions)
         {
             if(remainingOptions.Count == 0)
             {
-                var output = 0;
+                long output = 0;
                 string combo = "";
                 currentSet.ForEach(x => combo+=x.ToString());
                 Console.WriteLine(combo);
@@ -62,7 +62,7 @@ namespace Advent
                     foreach(var phase in currentSet)
                     {
                         engineProgram.ResetProgram();
-                        engineProgram.SetInputs(new List<int>(){phase, output});
+                        engineProgram.SetInputs(new List<long>(){phase, output});
                         engineProgram.RunProgram(0,false);
                         output = engineProgram.GetLastOutput();
                     }
@@ -72,10 +72,10 @@ namespace Advent
                     ResetAllEngines();
                     for(int i = 0; i<currentSet.Count; i++)
                     {
-                        engineList[i].SetInputs(new List<int>(){currentSet[i]});
+                        engineList[i].SetInputs(new List<long>(){currentSet[i]});
                     }
 
-                    int nextInput = 0;
+                    long nextInput = 0;
                     int currentEngine = 0;
                     while(!engineList.Last().programComplete)
                     {
@@ -100,7 +100,7 @@ namespace Advent
                 return output;
             }
 
-            var max = 0;
+            long max = 0;
             foreach(var option in remainingOptions)
             {
                 var copyCurrentSet = currentSet.Select(x=>x).ToList<int>();

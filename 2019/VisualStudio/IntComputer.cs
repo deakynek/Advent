@@ -7,58 +7,66 @@ namespace Advent
 {
     public class IntComputer
     {
-        List<int> Instructions = new List<int>();
-        List<int> InitialInstructions = new List<int>();
+        List<long> Instructions = new List<long>();
+        List<long> InitialInstructions = new List<long>();
 
-        List<int> Inputs = new List<int>();
+        List<long> Inputs = new List<long>();
         public int inputIndex = 0;
-        public int lastOutput=0;
+        public long lastOutput=0;
         bool stopOnOutput = false;
         public bool programComplete = false;    
         public int nextStepIndex = 0;
-        public bool debugMessages = false;
+        public bool debugMessages = true;
+
+        private long relativebase = 0;
         public IntComputer(List<string> input)
         {
             var separated = input[0].Split(',');
             foreach(var entry in separated)
             {
-                InitialInstructions.Add(Int32.Parse(entry));
-                Instructions.Add(Int32.Parse(entry));
+                InitialInstructions.Add(Int64.Parse(entry));
+                Instructions.Add(Int64.Parse(entry));
             }
         }
 
-        public void UpdateInitials(int one, int two)
+        public void UpdateInitials(long one, long two)
         {
             Instructions[1] = one;
             Instructions[2] = two;
         }
 
-        public void SetInputs(List<int> input)
+        public void SetInputs(List<long> input)
         {
             Inputs = input;
             inputIndex = 0;
         }
 
-        public void AddInput(int input)
+        public void AddInput(long input)
         {
             Inputs.Add(input);
         }
 
+        public void SetProgramIndex(int index, long val)
+        {
+            Instructions[index] = val;
+        }
+
         public void ResetProgram()
         {
-            Instructions = InitialInstructions.Select(x =>x).ToList<int>();
+            Instructions = InitialInstructions.Select(x =>x).ToList<long>();
             programComplete = false;
             stopOnOutput = false;
             inputIndex = 0;
-            Inputs = new List<int>();
+            Inputs = new List<long>();
             nextStepIndex =0;
+            relativebase = 0;
         }
 
-        public void FindInputsThatProduceValue(int val)
+        public void FindInputsThatProduceValue(long val)
         {
             bool found = false;
-            int a = 0;
-            int b = 0;
+            long a = 0;
+            long b = 0;
 
             for(a = 0; a<100; a++)
             {
@@ -88,7 +96,7 @@ namespace Advent
 
         }
 
-        public void RunProgram(int? index, bool print, bool pauseOnOutput = false )
+        public void RunProgram(int? index, bool prlong, bool pauseOnOutput = false )
         {
             stopOnOutput = pauseOnOutput;
             while(index != null)
@@ -96,7 +104,7 @@ namespace Advent
                 index = RunOp(index.Value);
             } 
 
-            if(print)
+            if(prlong)
             {
                 Console.WriteLine("Final Answer: " + Instructions[0].ToString());
             }
@@ -109,47 +117,50 @@ namespace Advent
                 return null;
 
             string parameterModes = String.Format("{0:00000}",instruction.Value);
-            int command = Int32.Parse(parameterModes.Substring(3));
+            long command = Int32.Parse(parameterModes.Substring(3));
 
             int numOfOperands = 4;
-            if(command==3 || command ==4)
+            if(command==3 || command ==4 || command == 9)
                 numOfOperands = 2;
-            if(command==5 || command == 6)
+            else if(command==5 || command == 6)
                 numOfOperands = 3;
+            else if(command == 99)
+                numOfOperands = 1;
 
-            var op1 = getNumberAtIndexIfExists(index+1);
-            var op2 = getNumberAtIndexIfExists(index+2);
-            var op3 = getNumberAtIndexIfExists(index+3);
+            var op1 = GetParameterModeValue(parameterModes[2],
+                                            numOfOperands > 1,
+                                            getNumberAtIndexIfExists(index+1));
+            var op2 = GetParameterModeValue(parameterModes[1],
+                                            numOfOperands > 2,
+                                            getNumberAtIndexIfExists(index+2));
+            var op3 = GetParameterModeValue(parameterModes[0],
+                                            numOfOperands > 3,
+                                            getNumberAtIndexIfExists(index+3));
 
-
-
-            if(parameterModes[2] == '0' && numOfOperands > 1 && op1.HasValue)
-            {
-                op1 = getNumberAtIndexIfExists(op1.Value);
-            }   
-            if(parameterModes[1] == '0' && numOfOperands > 2 && op2.HasValue)
-            {
-                op2 = getNumberAtIndexIfExists(op2.Value);
-            }                     
-            if(parameterModes[0] == '0' && numOfOperands > 3 &&op3.HasValue )
-            {
-                op3 = getNumberAtIndexIfExists(op3.Value);
-            }
+            int op1Index = GetParameterModeIndex(parameterModes[2],
+                                            numOfOperands > 1,
+                                            getNumberAtIndexIfExists(index+1));
+            int op2Index = GetParameterModeIndex(parameterModes[1],
+                                            numOfOperands > 2,
+                                            getNumberAtIndexIfExists(index+2));
+            int op3Index = GetParameterModeIndex(parameterModes[0],
+                                            numOfOperands > 3,
+                                            getNumberAtIndexIfExists(index+3));
 
             switch(command)
             {
                 case 1:
                     AddOp(  op1,
                             op2,
-                            getNumberAtIndexIfExists(index+3));
+                            op3Index);
                     break;
                 case 2:
                     MultOp( op1,
                             op2,
-                            getNumberAtIndexIfExists(index+3));
+                            op3Index);
                      break;
                 case 3:
-                    StoreInputOp(getNumberAtIndexIfExists(index+1), true);
+                    StoreInputOp(op1Index, true);
                     break;
                 case 4:
                     OutputOp(op1);
@@ -167,7 +178,7 @@ namespace Advent
                         return null;
                     }
                     if(op1.Value != 0)
-                        return op2.Value;
+                        return (int)op2.Value;
 
                     break;
                 case 6:
@@ -177,7 +188,7 @@ namespace Advent
                         return null;
                     }
                     if(op1.Value == 0)
-                        return op2.Value;
+                        return (int)op2.Value;
 
                     break;
                 
@@ -188,9 +199,9 @@ namespace Advent
                         return null;
                     }
                     if(op1.Value <  op2.Value)
-                        StoreInputOp(getNumberAtIndexIfExists(index+3),false,1);
+                        StoreInputOp(op3Index,false,1);
                     else
-                        StoreInputOp(getNumberAtIndexIfExists(index+3),false,0);
+                        StoreInputOp(op3Index,false,0);
 
                     break;
 
@@ -201,12 +212,15 @@ namespace Advent
                         return null;
                     }
                     if(op1.Value == op2.Value)
-                        StoreInputOp(getNumberAtIndexIfExists(index+3),false,1);
+                        StoreInputOp(op3Index,false,1);
                     else
-                        StoreInputOp(getNumberAtIndexIfExists(index+3),false,0);
+                        StoreInputOp(op3Index,false,0);
 
                     break;
 
+                case 9:
+                    relativebase+= op1.Value;
+                    break;
                 case 99:
                     programComplete = true;
                     return null;
@@ -218,40 +232,73 @@ namespace Advent
 
         }
 
-        private int? getNumberAtIndexIfExists(int? index)
+        private long? GetParameterModeValue(char parameterMode, bool validbyOperands, long? val)
         {
-            if(!index.HasValue || index>= Instructions.Count)
+            if(validbyOperands
+                 && val.HasValue)
+            {
+                if(parameterMode == '0')
+                {
+                    val = getNumberAtIndexIfExists((int)val.Value);
+                } 
+                else if(parameterMode== '2')
+                {
+                    val = getNumberAtIndexIfExists((int)((val.Value) + relativebase));
+                }
+            }
+
+            return val;
+        }
+
+        private int GetParameterModeIndex(char parameterMode, bool validbyOperands, long? val)
+        {
+            int ret = (int)val.Value;
+            if(validbyOperands
+                 && val.HasValue
+                 && parameterMode== '2')
+            {
+                ret = (int)((val.Value) + relativebase);
+            }
+
+            return ret;
+        }        
+
+        private long? getNumberAtIndexIfExists(int? index)
+        {
+            if(!index.HasValue)
                 return null;
+            if(index>= Instructions.Count)
+                return 0;
             
             return Instructions[index.Value];
         }
 
-        private void AddOp(int? op1, int? op2, int? outputAddr)
+        private void AddOp(long? op1, long? op2, int? outputAddr)
         {
-            if(!op1.HasValue || !op2.HasValue || !outputAddr.HasValue || outputAddr.Value >= Instructions.Count)
+            if(!op1.HasValue || !op2.HasValue || !outputAddr.HasValue)
             {
                 Console.WriteLine("Add operation failed");
                 return;
             }
 
-            Instructions[outputAddr.Value] = op1.Value+op2.Value;
+            SetValue(outputAddr.Value, op1.Value+op2.Value);
         }
 
 
-        private void MultOp(int? op1, int? op2, int? outputAddr)
+        private void MultOp(long? op1, long? op2, int? outputAddr)
         {
-            if(!op1.HasValue || !op2.HasValue || !outputAddr.HasValue || outputAddr.Value >= Instructions.Count)
+            if(!op1.HasValue || !op2.HasValue || !outputAddr.HasValue)
             {
                 Console.WriteLine("Multiplication operation failed");
                 return;
             }
 
-            Instructions[outputAddr.Value] = op1.Value*op2.Value;
+            SetValue(outputAddr.Value, op1.Value*op2.Value);
         }
 
-        private void StoreInputOp(int? outputAddr, bool getInputFromUser, int? input = 0)
+        private void StoreInputOp(int? outputAddr, bool getInputFromUser, long? input = 0)
         {
-            if(!outputAddr.HasValue || outputAddr.Value >= Instructions.Count)
+            if(!outputAddr.HasValue)
             {
                 Console.WriteLine("Store Input op failed");
                 return;
@@ -270,8 +317,8 @@ namespace Advent
                 if(inputIndex >= Inputs.Count)
                 {
                     Console.WriteLine("Enter input: ");
-                    int temp;
-                    if(!Int32.TryParse(Console.ReadLine(), out temp))
+                    long temp;
+                    if(!Int64.TryParse(Console.ReadLine(), out temp))
                     {
                         Console.WriteLine("Not a valid Input");
                         return;
@@ -288,15 +335,15 @@ namespace Advent
 
             }
 
-            Instructions[outputAddr.Value] = input.Value;
+            SetValue(outputAddr.Value,input.Value);
         }
 
-        public int GetLastOutput()
+        public long GetLastOutput()
         {
             return lastOutput;
         }
 
-        private void OutputOp(int? infoAddr)
+        private void OutputOp(long? infoAddr)
         {
             if(!infoAddr.HasValue)
             {
@@ -307,6 +354,19 @@ namespace Advent
             lastOutput = infoAddr.Value;
             if(debugMessages)
                 Console.WriteLine(String.Format("Output Command: {0}",infoAddr.Value));
-        }        
+        }
+
+        private void SetValue(int index, long? value)
+        {
+            if(!value.HasValue)
+                return;
+
+            while(index>Instructions.Count-1)
+            {
+                Instructions.Add(0);
+            }
+
+            Instructions[index] = value.Value;
+        }  
     }
 }

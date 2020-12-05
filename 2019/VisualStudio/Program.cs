@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 7;
+            int day = 14;
             var lines = (System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day))).ToList<string>();
 
 
@@ -48,12 +48,12 @@ namespace Advent
                     comp = new IntComputer(lines);
 
                     Console.WriteLine("\nPart 1");
-                    comp.SetInputs(new List<int>(){1});
+                    comp.SetInputs(new List<long>(){1});
                     comp.RunProgram(0,false);
 
                     Console.WriteLine("\nPart 2");
                     comp.ResetProgram();
-                    comp.SetInputs(new List<int>(){5});
+                    comp.SetInputs(new List<long>(){5});
                     comp.RunProgram(0,false);
                     break;
                 
@@ -67,6 +67,49 @@ namespace Advent
                     var engines = new EngineThrusters(lines);
                     //engines.RunThroughPossibleCombos();
                     engines.RunThroughPossibleCombosWithFeedback();
+                    break;
+
+                case 8:
+                    var images = new ImageParser(lines,25,6);
+                    images.Part1_PrintFewestZerosLayerCalc();
+                    images.Part2_PrintImage();
+                    break;
+
+                case 9:
+                    var computer = new IntComputer(lines);
+                    Console.WriteLine("\nPart1");
+                    computer.SetInputs(new List<long>(){1});
+                    computer.RunProgram(0,false);
+
+                    Console.WriteLine("\nPart2");
+                    computer.ResetProgram();
+                    computer.SetInputs(new List<long>(){2});
+                    computer.RunProgram(0,false);
+                    break;
+
+                case 10:
+                    var asteriods = new Asteriods(lines);
+                    asteriods.PrintMaxAss();
+                    break;
+
+                case 11:
+                    var paintRobot = new PaintingRobot(lines);
+                    paintRobot.PaintSquares();
+                    break;
+
+                case 12:
+                    var planets = new Planets(lines);
+                    planets.MovePlanets();
+                    break;
+
+                case 13:
+                    var arcade = new Arcade(lines);
+                    arcade.StartGame();
+                    break;
+
+                case 14:
+                    var eqs = new ChemicalEq(lines);
+                    eqs.GetOreForOneFuel();
                     break;
                 default:
                     break;

@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 5;
+            int day = 6;
             var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day)).ToList<string>();
 
             switch(day)
@@ -53,7 +53,10 @@ namespace Advent
                     var seatFinder = new SeatFinder(lines);
                     seatFinder.GetTicketIds();
                     break;
-                
+                case 6:
+                    var customs = new Customs(lines);
+                    customs.PrintGroupsTotal();
+                    break;
                 default:
                     break;
             }

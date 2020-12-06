@@ -16,7 +16,7 @@ namespace Advent
         bool stopOnOutput = false;
         public bool programComplete = false;    
         public int nextStepIndex = 0;
-        public bool debugMessages = true;
+        public bool debugMessages = false;
 
         private long relativebase = 0;
         public IntComputer(List<string> input)

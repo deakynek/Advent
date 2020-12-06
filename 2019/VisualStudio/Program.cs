@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 14;
+            int day = 16;
             var lines = (System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day))).ToList<string>();
 
 
@@ -110,6 +110,16 @@ namespace Advent
                 case 14:
                     var eqs = new ChemicalEq(lines);
                     eqs.GetOreForOneFuel();
+                    eqs.GetFuelForTrillionOre();
+                    break;
+                case 15:
+                    var robot = new OxRobot(lines);
+                    robot.TraverseMapFromStart();
+                    break;
+                case 16:
+                    var phaseCalc = new PhaseCalculator(lines);
+                    phaseCalc.ProgressANumberOfTimes(100);
+                    phaseCalc.UpdateToRealSignal(lines);
                     break;
                 default:
                     break;

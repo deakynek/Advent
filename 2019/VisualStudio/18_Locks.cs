@@ -17,6 +17,7 @@ namespace Advent
         int totalTiles;
 
         Dictionary<string,List<List<string>>> combos = new Dictionary<string, List<List<string>>>();
+        Dictionary<string, Dictionary<string,int>> stepsFromKeyToKey = new Dictionary<string, Dictionary<string, int>>();
 
         public Locks(List<string> inputs)
         {
@@ -155,39 +156,51 @@ namespace Advent
             return allCombos;
         }
 
-
-        private void FillRecurseKeyRequirements()
-        {
-            keyRequirementsRecursive = keyRequirements.ToDictionary(k => k.Key, v=> RecurseGetNumberOfKeyRequirements(v.Key));
-
-        }
-
         public void FindMinSteps()
         {
             List<string> keysObtained = new List<string>();
             var minStep = Int32.MaxValue;
             keyRequirements.Clear();
+            stepsFromKeyToKey.Clear();
             GetAllKeyRequirements(map);
-            FillRecurseKeyRequirements();
 
-            var validCombos = GetAllValidCombos();
-            
-            foreach(var combo in validCombos)
+            foreach(var key in allKeys.Keys)
             {
-                var currentKey = "@";
-                var thisStep = 0;
-                
-                foreach(var key in combo)
-                {
-                    thisStep += StepsFromKeyToKey(currentKey,key);
-                    currentKey = key;
-                }
+                Console.WriteLine("Getting Steps for " + key);
+                var allsteps = GetAvaiableKeys(new List<string>(){key}, key,0,false).ToDictionary(x=> x.Item1, x=>x.Item2);
+                stepsFromKeyToKey[key] = allsteps;
+            }
+            Console.WriteLine("Getting Steps for @");
+            stepsFromKeyToKey["@"] = GetAvaiableKeys(new List<string>(){"@"}, "@",0,false).ToDictionary(x=> x.Item1, x=>x.Item2);
 
-                if(thisStep< minStep)
-                    minStep = thisStep;
+            
+
+            
+            var AllValidSteps = RecurseGetSteps(new List<string>(),"@");
+
+            Console.WriteLine("Minimum Steps: " + AllValidSteps.Min());
+        }
+
+        private List<int> RecurseGetSteps(List<string> keysObtained, string fromKey)
+        {
+            if(keysObtained.Count() == allKeys.Count()-1)
+            {
+                var missingKey = allKeys.Keys.First(x => !keysObtained.Contains(x));
+                return new List<int>(){stepsFromKeyToKey[fromKey][missingKey]};
             }
 
-            Console.WriteLine("Minimum Steps: " + minStep);
+            var availableKeys = keyRequirements.Where(key =>!keysObtained.Contains(key.Key) &&
+                                                                !key.Value.Any(req => !keysObtained.Contains(req)))
+                                                .Select(key => key.Key);
+            var possibleSteps = new List<int>();
+            foreach(var nextKey in availableKeys)
+            {
+                var keysObtainedCopy = keysObtained.ToList();
+                keysObtainedCopy.Add(nextKey);
+                possibleSteps.AddRange( RecurseGetSteps(keysObtainedCopy, nextKey).Select(x => x+stepsFromKeyToKey[fromKey][nextKey]));
+            }
+
+            return possibleSteps;
         }
 
         private List<string> GetDoorList()
@@ -234,28 +247,47 @@ namespace Advent
                         map[y+1][x] == '#');
         }
 
-        public int StepsFromKeyToKey(string key1, string key2)
+ 
+
+        public List<Tuple<string,int>> GetAvaiableKeys(List<string> keysObtained,string startingKey, int currentSteps, bool stopAtBlockages)
         {
-            Tuple<int,int> currPos;
+            Tuple<int,int> beginHere;
 
-            if(key1 =="@")
-                currPos = startingPos;
+            if(startingKey =="@")
+                beginHere = startingPos;
             else
-                currPos= allKeys[key1];
+                beginHere= allKeys[startingKey];
 
+            var currPos = new Tuple<int,int>(beginHere.Item1, beginHere.Item2);
             int currDirection = 1;
-            List<Tuple<int,int,int>> thisSteps = new List<Tuple<int, int, int>>(){new Tuple<int, int, int>(currPos.Item1, currPos.Item2, 0)};
+            List<Tuple<int,int,int>> thisSteps = new List<Tuple<int, int, int>>(){new Tuple<int, int, int>(currPos.Item1, currPos.Item2, currentSteps)};
             bool wallFound = false;
+            var visitedStartCount =0;
+            List<Tuple<string,int>> keysFound = new List<Tuple<string, int>>();
 
-            while(true)
+            while(stopAtBlockages? visitedStartCount <= 4: thisSteps.Count()<totalTiles)
             {
                 var goingTo = getNewPos(currPos.Item1, currPos.Item2, currDirection);
                 var pixel = map[goingTo.Item2][goingTo.Item1].ToString();
                 
-                if(pixel == "#")
+                var treatThisAsWall = stopAtBlockages && 
+                                        (Regex.Match(pixel, @"[a-z]").Success && 
+                                            !keysObtained.Contains(pixel) 
+                                        || Regex.Match(pixel, @"[A-Z]").Success && 
+                                            !keysObtained.Contains(pixel.ToLower()));
+
+                if(pixel == "#" || treatThisAsWall)
                 {
                     wallFound = true;
                     currDirection = DirToTheRIght(currDirection);
+
+                    if(treatThisAsWall && Regex.Match(pixel, @"[a-z]").Success)
+                    {
+                        var posSteps1 = thisSteps.FirstOrDefault(tile => tile.Item1 == currPos.Item1 && tile.Item2 == currPos.Item2)?.Item3;
+                        if(posSteps1 != null)
+                            keysFound.Add(new Tuple<string,int>(pixel, posSteps1.Value+1));
+                    }
+
                 }
                 else
                 {
@@ -267,8 +299,11 @@ namespace Advent
                         if(posSteps1 != null)
                         {
                             thisSteps.Add(new Tuple<int, int, int>(newPos.Item1, newPos.Item2, posSteps1.Value+1));
-                            if(pixel == key2)
-                                return posSteps1.Value+1;
+
+                            if(Regex.Match(pixel, @"[a-z]").Success)
+                            {
+                                keysFound.Add(new Tuple<string,int>(pixel, posSteps1.Value+1));
+                            }
                         }
                     }
 
@@ -276,8 +311,11 @@ namespace Advent
                     if(wallFound)
                         currDirection = DirToTheLeft(currDirection);
                 }
-            }
 
+                if(stopAtBlockages&& currPos.Item1 == beginHere.Item1 && currPos.Item2 == beginHere.Item2)
+                    visitedStartCount++;
+            }
+            return keysFound;
         }
 
         public int DirToTheRIght(int currDirection)

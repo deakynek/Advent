@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 16;
+            int day = 18;
             var lines = (System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day))).ToList<string>();
 
 
@@ -121,6 +121,13 @@ namespace Advent
                     phaseCalc.ProgressANumberOfTimes(100);
                     phaseCalc.UpdateToRealSignal(lines);
                     break;
+                case 17:
+                    var scaffRobot = new Scaffold(lines);
+                    break;
+                case 18:
+                    var lockMap = new Locks(lines);
+                    lockMap.FindMinSteps();
+                    break;                   
                 default:
                     break;
             }

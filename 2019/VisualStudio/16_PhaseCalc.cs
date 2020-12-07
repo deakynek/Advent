@@ -46,8 +46,6 @@ namespace Advent
                 iter++;
             }
 
-
-
             var output = "";
             var finalPhase = currPhase.Skip(offset).Take(8);
             foreach(var val in finalPhase)

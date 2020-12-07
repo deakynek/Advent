@@ -70,7 +70,9 @@ namespace Advent
             int dummy;
             for(int i = 1; i<127; i++)
             {
-                if(!idsPresentForThisRow(i,out mySeat) &&
+                string thisRow = "";
+                if(
+                    !idsPresentForThisRow(i,out mySeat) &&
                     idsPresentForThisRow(i-1,out dummy) &&
                     idsPresentForThisRow(i+1,out dummy))
                 {

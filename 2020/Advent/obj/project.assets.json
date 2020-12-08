@@ -8,19 +8,19 @@
     "net5.0": []
   },
   "packageFolders": {
-    "C:\\Users\\Karl\\.nuget\\packages\\": {}
+    "C:\\Users\\DeepThought\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Karl\\Documents\\Advent\\2020\\Advent\\Advent.csproj",
+      "projectUniqueName": "C:\\Users\\DeepThought\\Documents\\AdventCode\\2020\\Advent\\Advent.csproj",
       "projectName": "Advent",
-      "projectPath": "C:\\Users\\Karl\\Documents\\Advent\\2020\\Advent\\Advent.csproj",
-      "packagesPath": "C:\\Users\\Karl\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Karl\\Documents\\Advent\\2020\\Advent\\obj\\",
+      "projectPath": "C:\\Users\\DeepThought\\Documents\\AdventCode\\2020\\Advent\\Advent.csproj",
+      "packagesPath": "C:\\Users\\DeepThought\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\DeepThought\\Documents\\AdventCode\\2020\\Advent\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Karl\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\DeepThought\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net5.0"

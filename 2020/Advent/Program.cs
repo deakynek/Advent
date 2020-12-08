@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 6;
+            int day = 7;
             var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day)).ToList<string>();
 
             switch(day)
@@ -55,7 +55,9 @@ namespace Advent
                     break;
                 case 6:
                     var customs = new Customs(lines);
-                    customs.PrintGroupsTotal();
+                    break;
+                case 7:
+                    var test = new Test(lines);
                     break;
                 default:
                     break;
@@ -72,5 +74,7 @@ namespace Advent
                 span.Milliseconds);
             Console.WriteLine("RunTime of " +operation+ ": " + elapsedTime);
         }
+
+        
     }
 }

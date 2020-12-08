@@ -6,12 +6,12 @@ using System.Text.RegularExpressions;
 
 namespace Advent
 {
-    class Test
+    class Customs
     {
         List<string> rawInput = new List<string>();
         Dictionary<string, List<Tuple<int,string>>> bagLaws = new Dictionary<string, List<Tuple<int,string>>> ();
 
-        public Test(List<string> lines)
+        public Customs(List<string> lines)
         {
             foreach(var line in lines)
             {

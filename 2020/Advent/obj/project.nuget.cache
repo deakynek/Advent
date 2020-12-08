@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "pK4uILWnoaWkh4adij7birqXrOS8furOSa/cWCVjay+hScHIpZ3JdoiFGY0ok2VFEBNULvroWcl4fEQ1XnE0gQ==",
+  "dgSpecHash": "mbV5sJf4gcmskeiSJREhfrKkBYPkvBEUmUdK2yg3rVF+32g3QBbhkPNeorcUAB/lOcseSs9xR81WIuSq9hUgRg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Karl\\Documents\\Advent\\2020\\Advent\\Advent.csproj",
+  "projectFilePath": "C:\\Users\\DeepThought\\Documents\\AdventCode\\2020\\Advent\\Advent.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

@@ -19,6 +19,7 @@ namespace Advent
         Dictionary<string,List<List<string>>> combos = new Dictionary<string, List<List<string>>>();
         Dictionary<string,List<string>> textComboCache = new Dictionary<string, List<string>>();
         Dictionary<string, Dictionary<string,int>> stepsFromKeyToKey = new Dictionary<string, Dictionary<string, int>>();
+        Dictionary<string, Dictionary<string,int>> bottomUpCombos = new Dictionary<string, Dictionary<string, int>>();
 
         public Locks(List<string> inputs)
         {
@@ -79,10 +80,10 @@ namespace Advent
                          if(!KeysFound.Contains(pixel))
                             KeysFound.Add(pixel);
 
-                        if(keysNeeded.Contains(pixel.ToLower()))
-                            keysNeeded.Remove(pixel.ToLower());
-                        else if(!CurrentPosACorner(newPos.Item1,newPos.Item2))
-                            keysNeeded.Add(pixel.ToLower());
+                        // if(keysNeeded.Contains(pixel.ToLower()))
+                        //     keysNeeded.Remove(pixel.ToLower());
+                        // else if(!CurrentPosACorner(newPos.Item1,newPos.Item2))
+                        //     keysNeeded.Add(pixel.ToLower());
 
                             
                     }
@@ -157,37 +158,44 @@ namespace Advent
             return allCombos;
         }
 
-        private List<string> GetAllTextCombos(string usedKeys, List<string> avaiableKeys, int level)
+        private void GetAllTextCombos(string usedKeys, string avaiableKeys, int level, ref int? steps, ref string nextKey)
         {
-            Console.WriteLine("LEVEL " + level);
+            //Console.WriteLine("LEVEL " + level);
             if(avaiableKeys.Count() == 1)
-                return avaiableKeys;
-
-            var usedKeyList = usedKeys.Select(x=>x.ToString()).ToList();
-            List<string> thisCombo = new List<string>();
-            
-            var alpaha = String.Join("",avaiableKeys.OrderBy(x=>x));
-            if(textComboCache.ContainsKey(alpaha))
-                return textComboCache[alpaha];
-
-            foreach(var nextKey in avaiableKeys)
             {
-                if(!keyRequirements[nextKey].All(x=> usedKeyList.Contains(x)))
-                    continue;
+                int thissteps = GetSteps(usedKeys + avaiableKeys[0]);
+                if(!steps.HasValue || thissteps<steps)
+                {
+                    steps = thissteps;
+                    Console.WriteLine("Min steps " + steps + ": " + usedKeys + avaiableKeys[0]);
+                }
 
-                var lowerCombos = GetAllTextCombos(usedKeys+nextKey,avaiableKeys.Where(x=>x!=nextKey).ToList(), level+1);
-                if(lowerCombos.Count == 0)
-                    continue;
-
-                var subAlpaha = String.Join("",avaiableKeys.Where(x=>x!=nextKey).ToList().OrderBy(x=>x));
-                if(!textComboCache.ContainsKey(subAlpaha))
-                    textComboCache.Add(subAlpaha,lowerCombos);
-
-                thisCombo.AddRange(lowerCombos.Select(x => nextKey+x));
-
+                return;
             }
 
-            return thisCombo;
+            for(int i =0; i<avaiableKeys.Count(); i++)
+            {
+                nextKey = avaiableKeys.Substring(i,1);
+                var thisSteps= GetSteps(usedKeys + nextKey);       
+                 
+                {
+                    continue;
+                }
+
+                if(!keyRequirements[nextKey].All(x=> usedKeys.Contains(x)))
+                    continue;
+
+                // var output ="";
+                // var tabCount = 0;
+                // while(tabCount<level)
+                // {
+                //     output+="  ";
+                //     tabCount++;
+                // }
+                // Console.WriteLine(output+nextKey);
+                GetAllTextCombos(usedKeys+nextKey,avaiableKeys.Remove(i,1), level+1, ref steps, ref nextKey);
+
+            }
 
         }
 
@@ -199,52 +207,118 @@ namespace Advent
             stepsFromKeyToKey.Clear();
             GetAllKeyRequirements(map);
 
+            var bigMap = false;
+
             var sortedKeys = allKeys.Keys.OrderBy(x =>x).ToList();
             for(int i =0; i< sortedKeys.Count(); i++)
             {
                 Console.WriteLine("Getting Steps for " + sortedKeys[i]);
-                var allsteps = GetAvaiableKeys(sortedKeys.Take(i+1).ToList(), sortedKeys[i] ,0,false).ToDictionary(x=> x.Item1, x=>x.Item2);
+                var allsteps = GetAvaiableKeys(sortedKeys.Take(i+1).ToList(), sortedKeys[i] ,0,false,bigMap).ToDictionary(x=> x.Item1, x=>x.Item2);
                 stepsFromKeyToKey[sortedKeys[i]] = allsteps;
             }
             Console.WriteLine("Getting Steps for @");
-            stepsFromKeyToKey["@"] = GetAvaiableKeys(new List<string>(){"@"}, "@",0,false).ToDictionary(x=> x.Item1, x=>x.Item2);
+            stepsFromKeyToKey["@"] = GetAvaiableKeys(new List<string>(){"@"}, "@",0,false,bigMap).ToDictionary(x=> x.Item1, x=>x.Item2);
             
             textComboCache.Clear();
-            var textCombos = GetAllTextCombos("@", allKeys.Keys.Where(x => x!="@").ToList(),0);
+            bottomUpCombos.Clear();
+            
+            var key = "";
+            //GetAllTextCombos("@", String.Join("",allKeys.Keys.Where(x => x!="@").OrderBy(x=>keyRequirements[x].Count).Reverse().ToList()),0, ref steps,ref key);
+            var steps = RecurseBottomUpApproach("@", String.Join("",allKeys.Keys.Where(x => x!="@").OrderBy(x=>keyRequirements[x].Count).Reverse().ToList()));
 
-            int? minSteps = null;
-            foreach(var combo in textCombos.Select(x=> "@"+x))
-            {
-                var thisStep = 0;
-                bool stop = false;
-                for(int i =1; i<combo.Count(); i++)
-                {
-                    var key1 = combo.Substring(i-1,1);
-                    var key2 = combo.Substring(i,1);
 
-                    if(key1 == "@")
-                        thisStep+= stepsFromKeyToKey[key1][key2];
-                    else
-                    {
-                        var sorted = (new List<string>(){key1,key2}).OrderBy(x=>x).ToList();
+            // int? minSteps = null;
+            // foreach(var combo in textCombos.Select(x=> "@"+x))
+            // {
+            //     var thisStep = 0;
+            //     bool stop = false;
+            //     for(int i =1; i<combo.Count(); i++)
+            //     {
+            //         var key1 = combo.Substring(i-1,1);
+            //         var key2 = combo.Substring(i,1);
+
+            //         if(key1 == "@")
+            //             thisStep+= stepsFromKeyToKey[key1][key2];
+            //         else
+            //         {
+            //             var sorted = (new List<string>(){key1,key2}).OrderBy(x=>x).ToList();
                         
-                        thisStep+= stepsFromKeyToKey[sorted[0]][sorted[1]];
-                    }
+            //             thisStep+= stepsFromKeyToKey[sorted[0]][sorted[1]];
+            //         }
 
-                    if(minSteps.HasValue && thisStep>minSteps)
-                    {
-                        stop = true;
-                        break;
-                    }
-                }
+            //         if(minSteps.HasValue && thisStep>minSteps)
+            //         {
+            //             stop = true;
+            //             break;
+            //         }
+            //     }
 
-                if(stop)
-                    continue;
-                else if(!minSteps.HasValue || thisStep<minSteps)
-                    minSteps = thisStep;
+            //     if(stop)
+            //         continue;
+            //     else if(!minSteps.HasValue || thisStep<minSteps)
+            //         minSteps = thisStep;
+            // }
+
+            Console.WriteLine("Minimum Steps: " + steps);
+        }
+
+        private int? RecurseBottomUpApproach(string currentKey, string avaiableKeys)
+        {
+            if(bottomUpCombos.ContainsKey(currentKey) && bottomUpCombos[currentKey].ContainsKey(avaiableKeys))
+                return bottomUpCombos[currentKey][avaiableKeys];
+
+            if(avaiableKeys.Count() == 1 && !bottomUpCombos.ContainsKey(currentKey))
+            {
+                bottomUpCombos.Add(currentKey, new Dictionary<string, int>());
+                bottomUpCombos[currentKey].Add(avaiableKeys, GetSteps(currentKey+avaiableKeys[0]));
+                return bottomUpCombos[currentKey][avaiableKeys];
             }
 
-            Console.WriteLine("Minimum Steps: " + minSteps);
+            List<int> thisSteps  = new List<int>();
+            for(int i =0; i<avaiableKeys.Count(); i++)
+            {
+                var nextKey = avaiableKeys.Substring(i,1);
+                if(keyRequirements[nextKey].Any(x=> avaiableKeys.Remove(i,1).Contains(x)))
+                    continue;
+                
+                var prevSteps = RecurseBottomUpApproach(nextKey,avaiableKeys.Remove(i,1));
+                if(prevSteps == null)
+                    continue;
+
+                thisSteps.Add(prevSteps.Value+GetSteps(currentKey+nextKey));
+            }
+            if(thisSteps.Count() == 0)
+                return null;
+
+            if(!bottomUpCombos.ContainsKey(currentKey))
+            {
+                bottomUpCombos.Add(currentKey, new Dictionary<string, int>());
+            }
+
+            bottomUpCombos[currentKey].Add(avaiableKeys, thisSteps.Min());
+            return bottomUpCombos[currentKey][avaiableKeys];
+        }
+
+        private int GetSteps(string keySeq)
+        {
+            var thisStep = 0;
+            for(int i =1; i<keySeq.Count(); i++)
+            {
+                var key1 = keySeq.Substring(i-1,1);
+                var key2 = keySeq.Substring(i,1);
+
+                if(key1 == "@")
+                    thisStep+= stepsFromKeyToKey[key1][key2];
+                else
+                {
+                    if(String.Compare(key1, key2)>0)
+                        thisStep+= stepsFromKeyToKey[key2][key1];
+                    else
+                        thisStep+= stepsFromKeyToKey[key1][key2];
+                }
+            }
+
+            return thisStep;
         }
 
         private List<int> RecurseGetSteps(List<string> keysObtained, string fromKey)
@@ -328,7 +402,7 @@ namespace Advent
 
  
 
-        public List<Tuple<string,int>> GetAvaiableKeys(List<string> keysObtained,string startingKey, int currentSteps, bool stopAtBlockages)
+        public List<Tuple<string,int>> GetAvaiableKeys(List<string> keysObtained,string startingKey, int currentSteps, bool stopAtBlockages, bool bigMap)
         {
             Tuple<int,int> beginHere;
 
@@ -344,7 +418,7 @@ namespace Advent
             var visitedStartCount =0;
             List<Tuple<string,int>> keysFound = new List<Tuple<string, int>>();
 
-            while(stopAtBlockages? visitedStartCount <= 4: thisSteps.Count()<totalTiles)
+            while(stopAtBlockages? visitedStartCount <= 4: thisSteps.Count()< (startingKey!="@" && bigMap ? totalTiles-1: totalTiles))
             {
                 var goingTo = getNewPos(currPos.Item1, currPos.Item2, currDirection);
                 var pixel = map[goingTo.Item2][goingTo.Item1].ToString();

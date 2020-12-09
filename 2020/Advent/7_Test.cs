@@ -6,12 +6,12 @@ using System.Text.RegularExpressions;
 
 namespace Advent
 {
-    class Test
+    class GameConsole
     {
         List<string> instructions = new List<string>();
         long accumulator = 0;
 
-        public Test(List<string> lines)
+        public GameConsole(List<string> lines)
         {
             instructions = lines;
             RunProgram(instructions);

@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 7;
+            int day = 8;
             var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day)).ToList<string>();
 
             switch(day)
@@ -57,6 +57,9 @@ namespace Advent
                     var customs = new Customs(lines);
                     break;
                 case 7:
+                    var game = new GameConsole(lines);
+                    break;
+                case 8:
                     var test = new Test(lines);
                     break;
                 default:
@@ -75,6 +78,6 @@ namespace Advent
             Console.WriteLine("RunTime of " +operation+ ": " + elapsedTime);
         }
 
-        
+
     }
 }

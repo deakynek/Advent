@@ -13,13 +13,17 @@ namespace Advent
         Dictionary<string,List<string>> keyRequirementsRecursive = new Dictionary<string, List<string>>();
             
         Tuple<int,int> startingPos;
+        List<Tuple<int,int>> startingPositions = new List<Tuple<int, int>>();
+
         Dictionary<string, Tuple<int,int>> allKeys = new Dictionary<string, Tuple<int,int>>();
         int totalTiles;
 
         Dictionary<string,List<List<string>>> combos = new Dictionary<string, List<List<string>>>();
         Dictionary<string,List<string>> textComboCache = new Dictionary<string, List<string>>();
-        Dictionary<string, Dictionary<string,int>> stepsFromKeyToKey = new Dictionary<string, Dictionary<string, int>>();
+        Dictionary<string, Dictionary<string,Tuple<int,List<string>>>> stepsFromKeyToKey = new Dictionary<string, Dictionary<string, Tuple<int, List<string>>>>();
         Dictionary<string, Dictionary<string,int>> bottomUpCombos = new Dictionary<string, Dictionary<string, int>>();
+        List<int> completedTiles = new List<int>();
+        List<int> incompleteTiles = new List<int>();
 
         public Locks(List<string> inputs)
         {
@@ -79,13 +83,6 @@ namespace Advent
 
                          if(!KeysFound.Contains(pixel))
                             KeysFound.Add(pixel);
-
-                        // if(keysNeeded.Contains(pixel.ToLower()))
-                        //     keysNeeded.Remove(pixel.ToLower());
-                        // else if(!CurrentPosACorner(newPos.Item1,newPos.Item2))
-                        //     keysNeeded.Add(pixel.ToLower());
-
-                            
                     }
 
                     currPos = newPos;
@@ -93,110 +90,6 @@ namespace Advent
                         currDirection = DirToTheLeft(currDirection);
                 }
             }
-        }
-
-        private void PrintKeyRequirements()
-        {
-            foreach(var key in keyRequirements.Keys)
-            {
-                var allReq = RecurseGetNumberOfKeyRequirements(key);
-
-                Console.WriteLine(String.Format("Key {0} requires {1} other keys",key, allReq.Count()));
-                Console.WriteLine(String.Join(", ",allReq.ToArray()));
-
-                var usedCount = keyRequirements.Keys.Where(x => RecurseGetNumberOfKeyRequirements(x).Contains(key)).Count();
-                Console.WriteLine(String.Format("{0} other keys require Key {1}",usedCount, key));
-            }
-
-        }
-
-        private List<List<string>> GetAllValidCombos()
-        {
-            combos.Clear();
-            return RecurseGetAllCombos(allKeys.Keys.OrderBy(x => keyRequirementsRecursive[x].Count()).Reverse().ToList());
-        }
-
-        private List<List<string>> RecurseGetAllCombos(List<string> remainingKeys)
-        {
-            List<List<string>> allCombos = new List<List<string>>();
-
-            if(remainingKeys.Count() == 1)
-            {
-                allCombos.Add(remainingKeys);
-                return allCombos;
-            }
-
-
-            var orderedAlphabetically = String.Join("",remainingKeys.OrderBy(x=>x).ToArray());
-            if(combos.ContainsKey(orderedAlphabetically))
-            {
-                return combos[orderedAlphabetically];
-            }
-
-            foreach(var key in remainingKeys)
-            {
-                var copy = remainingKeys.ToList();
-                copy.Remove(key);
-                if(copy.Any(x=> keyRequirementsRecursive[key].Contains(x)))
-                    continue;
-
-                var allRemainingCombos = RecurseGetAllCombos(copy);
-                if(allRemainingCombos.Count() == 0)
-                    continue;
-
-
-                foreach(var combo in allRemainingCombos)
-                {
-                    var comboCopy = combo.ToList();
-                    comboCopy.Insert(0,key);
-                    allCombos.Add(comboCopy);
-                }
-            }
-            Console.WriteLine("Returning from level " + remainingKeys.Count());
-
-            combos.Add(orderedAlphabetically,allCombos);
-            return allCombos;
-        }
-
-        private void GetAllTextCombos(string usedKeys, string avaiableKeys, int level, ref int? steps, ref string nextKey)
-        {
-            //Console.WriteLine("LEVEL " + level);
-            if(avaiableKeys.Count() == 1)
-            {
-                int thissteps = GetSteps(usedKeys + avaiableKeys[0]);
-                if(!steps.HasValue || thissteps<steps)
-                {
-                    steps = thissteps;
-                    Console.WriteLine("Min steps " + steps + ": " + usedKeys + avaiableKeys[0]);
-                }
-
-                return;
-            }
-
-            for(int i =0; i<avaiableKeys.Count(); i++)
-            {
-                nextKey = avaiableKeys.Substring(i,1);
-                var thisSteps= GetSteps(usedKeys + nextKey);       
-                 
-                {
-                    continue;
-                }
-
-                if(!keyRequirements[nextKey].All(x=> usedKeys.Contains(x)))
-                    continue;
-
-                // var output ="";
-                // var tabCount = 0;
-                // while(tabCount<level)
-                // {
-                //     output+="  ";
-                //     tabCount++;
-                // }
-                // Console.WriteLine(output+nextKey);
-                GetAllTextCombos(usedKeys+nextKey,avaiableKeys.Remove(i,1), level+1, ref steps, ref nextKey);
-
-            }
-
         }
 
         public void FindMinSteps()
@@ -207,60 +100,187 @@ namespace Advent
             stepsFromKeyToKey.Clear();
             GetAllKeyRequirements(map);
 
-            var bigMap = false;
+            var bigMap = true;
 
             var sortedKeys = allKeys.Keys.OrderBy(x =>x).ToList();
             for(int i =0; i< sortedKeys.Count(); i++)
             {
                 Console.WriteLine("Getting Steps for " + sortedKeys[i]);
-                var allsteps = GetAvaiableKeys(sortedKeys.Take(i+1).ToList(), sortedKeys[i] ,0,false,bigMap).ToDictionary(x=> x.Item1, x=>x.Item2);
+                var allsteps = GetAvaiableKeys(new List<string>(){sortedKeys[i]}, sortedKeys[i] ,0).ToDictionary(x=> x.Item1, x=> new Tuple<int, List<string>>(x.Item2,x.Item3));
                 stepsFromKeyToKey[sortedKeys[i]] = allsteps;
             }
             Console.WriteLine("Getting Steps for @");
-            stepsFromKeyToKey["@"] = GetAvaiableKeys(new List<string>(){"@"}, "@",0,false,bigMap).ToDictionary(x=> x.Item1, x=>x.Item2);
+            stepsFromKeyToKey["@"] = GetAvaiableKeys(new List<string>(){"@"}, "@",0).ToDictionary(x=> x.Item1, x=> new Tuple<int, List<string>>(x.Item2,x.Item3));
             
             textComboCache.Clear();
             bottomUpCombos.Clear();
             
-            var key = "";
-            //GetAllTextCombos("@", String.Join("",allKeys.Keys.Where(x => x!="@").OrderBy(x=>keyRequirements[x].Count).Reverse().ToList()),0, ref steps,ref key);
             var steps = RecurseBottomUpApproach("@", String.Join("",allKeys.Keys.Where(x => x!="@").OrderBy(x=>keyRequirements[x].Count).Reverse().ToList()));
 
-
-            // int? minSteps = null;
-            // foreach(var combo in textCombos.Select(x=> "@"+x))
-            // {
-            //     var thisStep = 0;
-            //     bool stop = false;
-            //     for(int i =1; i<combo.Count(); i++)
-            //     {
-            //         var key1 = combo.Substring(i-1,1);
-            //         var key2 = combo.Substring(i,1);
-
-            //         if(key1 == "@")
-            //             thisStep+= stepsFromKeyToKey[key1][key2];
-            //         else
-            //         {
-            //             var sorted = (new List<string>(){key1,key2}).OrderBy(x=>x).ToList();
-                        
-            //             thisStep+= stepsFromKeyToKey[sorted[0]][sorted[1]];
-            //         }
-
-            //         if(minSteps.HasValue && thisStep>minSteps)
-            //         {
-            //             stop = true;
-            //             break;
-            //         }
-            //     }
-
-            //     if(stop)
-            //         continue;
-            //     else if(!minSteps.HasValue || thisStep<minSteps)
-            //         minSteps = thisStep;
-            // }
-
             Console.WriteLine("Minimum Steps: " + steps);
+
+
+            UpdateMap();
+            stepsFromKeyToKey.Clear();
+            sortedKeys = allKeys.Keys.OrderBy(x =>x).ToList();
+            for(int i =0; i< sortedKeys.Count(); i++)
+            {
+                Console.WriteLine("Getting Steps for " + sortedKeys[i]);
+                var allsteps = GetAvaiableKeys(new List<string>(){sortedKeys[i]}, sortedKeys[i] ,0).ToDictionary(x=> x.Item1, x=> new Tuple<int, List<string>>(x.Item2,x.Item3));
+                stepsFromKeyToKey[sortedKeys[i]] = allsteps;
+            }
+            
+            for(int i = 0; i<4; i++)
+            {
+                Console.WriteLine("Getting Steps for " + i);
+                stepsFromKeyToKey[String.Format("{0}",i)] = GetAvaiableKeys(new List<string>(){String.Format("{0}",i)}, i.ToString() ,0).ToDictionary(x=> x.Item1, x=> new Tuple<int, List<string>>(x.Item2,x.Item3));
+            }
+
+            textComboCache.Clear();
+            bottomUpCombos.Clear();
+            var steps4Robot = new List<int?>();
+            for (int i = 0; i < 4; i++)
+            {
+                steps4Robot.Add(RecurseBottomUpApproach(i.ToString(),String.Join("",stepsFromKeyToKey[i.ToString()].Keys.OrderBy(x=>keyRequirements[x].Count).Reverse().ToList())));  
+            }
+
+            Console.WriteLine(steps4Robot.Sum().ToString());
+
+
+            steps4Robot = new List<int?>();
+            for (int i = 0; i < 4; i++)
+            {
+                textComboCache.Clear();
+                bottomUpCombos.Clear();                
+                steps4Robot.Add(RecurseBottomUp4Robots("0","1","2","3",String.Join("",allKeys.Keys.Where(x => x!="@").OrderBy(x=>keyRequirements[x].Count).Reverse().ToList())));  
+            }            
         }
+
+        private int? RecurseBottomUp4Robots(string last0key, 
+                                            string last1key, 
+                                            string last2key,
+                                            string last3key,
+                                            string avaiableKeys)
+        {
+            var lastKey = "";
+            if(avaiableKeys.Length == 1)
+            {
+                if(stepsFromKeyToKey["0"].ContainsKey(avaiableKeys[0].ToString()))
+                { lastKey = last0key;}
+                else if(stepsFromKeyToKey["1"].ContainsKey(avaiableKeys[0].ToString()))
+                { lastKey = last1key; }
+                else if(stepsFromKeyToKey["2"].ContainsKey(avaiableKeys[0].ToString()))
+                { lastKey = last2key; }
+                else if(stepsFromKeyToKey["3"].ContainsKey(avaiableKeys[0].ToString()))
+                { lastKey = last3key; }
+
+                if(!bottomUpCombos.ContainsKey(lastKey))
+                    bottomUpCombos.Add(lastKey, new Dictionary<string, int>());
+                
+                if(!bottomUpCombos[lastKey].ContainsKey(avaiableKeys))
+                    bottomUpCombos[lastKey].Add(avaiableKeys, GetSteps(lastKey+avaiableKeys[0]));
+
+                return bottomUpCombos[lastKey][avaiableKeys];
+            }
+
+            List<int> thisSteps  = new List<int>();
+            for(int i =0; i<avaiableKeys.Count(); i++)
+            {
+                var nextKey = avaiableKeys.Substring(i,1);
+                if(keyRequirements[nextKey].Any(x=> avaiableKeys.Remove(i,1).Contains(x)))
+                    continue;
+                
+                
+                string keyJustBefore = "";
+                var section = 0;
+                if(stepsFromKeyToKey["0"].ContainsKey(nextKey))
+                { 
+                    keyJustBefore = last0key;
+                    section = 0;
+                }
+                else if(stepsFromKeyToKey["1"].ContainsKey(nextKey))
+                {
+                    keyJustBefore = last1key; 
+                    section = 1;
+                }
+                else if(stepsFromKeyToKey["2"].ContainsKey(nextKey))
+                {
+                    keyJustBefore = last2key; 
+                    section = 2;
+                }
+                else if(stepsFromKeyToKey["3"].ContainsKey(nextKey))
+                { 
+                    keyJustBefore = last3key; 
+                    section = 3;
+                }
+
+
+                string keysCopy = avaiableKeys.Remove(i,1);
+                var frees = GetKeysForFrees(keyJustBefore,nextKey);
+                foreach(var key in frees)
+                {
+                    if(keysCopy.Contains(key))
+                        keysCopy = keysCopy.Replace(key, "");
+                }
+ 
+
+
+                int? prevSteps = 0;
+                if(keysCopy != "")
+                {
+                    switch(section)
+                    {
+                        case 0:
+                            prevSteps = RecurseBottomUp4Robots(nextKey,last1key,last2key,last3key,keysCopy);
+                            break;
+                        case 1:
+                            prevSteps = RecurseBottomUp4Robots(last0key,nextKey,last2key,last3key,keysCopy);
+                            break;
+                        case 2:
+                            prevSteps = RecurseBottomUp4Robots(last0key,last1key,nextKey,last3key,keysCopy);
+                            break;
+                        case 3:
+                            prevSteps = RecurseBottomUp4Robots(last0key,last1key,last2key,nextKey,keysCopy);
+                            break;
+                    }
+                }
+                if(prevSteps == null)
+                    continue;
+
+                var steps = prevSteps.Value+GetSteps(keyJustBefore+nextKey);
+                thisSteps.Add(steps);
+
+                if(!bottomUpCombos.ContainsKey(keyJustBefore))
+                    bottomUpCombos.Add(keyJustBefore, new Dictionary<string, int>());
+                if(!bottomUpCombos[keyJustBefore].ContainsKey(avaiableKeys))
+                    bottomUpCombos[keyJustBefore].Add(avaiableKeys,int.MaxValue);
+                if(bottomUpCombos[keyJustBefore][avaiableKeys] > steps)
+                    bottomUpCombos[keyJustBefore][avaiableKeys] = steps;
+            }
+            if(thisSteps.Count() == 0)
+                return null;
+
+            return thisSteps.Min();
+        }
+
+
+        private void UpdateMap()
+        {
+            startingPositions.Clear();
+            map[startingPos.Item2] = map[startingPos.Item2].Replace('@','#');
+            map[startingPos.Item2] = map[startingPos.Item2].Replace('.','#');
+            
+            map[startingPos.Item2-1] = map[startingPos.Item2-1].Remove(startingPos.Item1-1,3);
+            map[startingPos.Item2-1] = map[startingPos.Item2-1].Insert(startingPos.Item1-1,"0#1");
+
+            map[startingPos.Item2+1] = map[startingPos.Item2+1].Remove(startingPos.Item1-1,3);
+            map[startingPos.Item2+1] = map[startingPos.Item2+1].Insert(startingPos.Item1-1,"2#3");
+
+            startingPositions.Add(new Tuple<int,int>(startingPos.Item1-1,startingPos.Item2-1));
+            startingPositions.Add(new Tuple<int,int>(startingPos.Item1+1,startingPos.Item2-1));
+            startingPositions.Add(new Tuple<int,int>(startingPos.Item1-1,startingPos.Item2+1));
+            startingPositions.Add(new Tuple<int,int>(startingPos.Item1+1,startingPos.Item2+1));
+         }
 
         private int? RecurseBottomUpApproach(string currentKey, string avaiableKeys)
         {
@@ -281,7 +301,17 @@ namespace Advent
                 if(keyRequirements[nextKey].Any(x=> avaiableKeys.Remove(i,1).Contains(x)))
                     continue;
                 
-                var prevSteps = RecurseBottomUpApproach(nextKey,avaiableKeys.Remove(i,1));
+                string keysCopy = avaiableKeys.Remove(i,1);
+                var frees = GetKeysForFrees(currentKey,nextKey);
+                foreach(var key in frees)
+                {
+                    if(keysCopy.Contains(key))
+                        keysCopy = keysCopy.Replace(key, "");
+                }
+ 
+                int? prevSteps = 0;
+                if(keysCopy != "")
+                    prevSteps = RecurseBottomUpApproach(nextKey,keysCopy);
                 if(prevSteps == null)
                     continue;
 
@@ -301,201 +331,121 @@ namespace Advent
 
         private int GetSteps(string keySeq)
         {
+            var keysForFree = new List<string>();
             var thisStep = 0;
             for(int i =1; i<keySeq.Count(); i++)
             {
                 var key1 = keySeq.Substring(i-1,1);
                 var key2 = keySeq.Substring(i,1);
 
-                if(key1 == "@")
-                    thisStep+= stepsFromKeyToKey[key1][key2];
-                else
-                {
-                    if(String.Compare(key1, key2)>0)
-                        thisStep+= stepsFromKeyToKey[key2][key1];
-                    else
-                        thisStep+= stepsFromKeyToKey[key1][key2];
-                }
+                thisStep+= stepsFromKeyToKey[key1][key2].Item1;
             }
 
             return thisStep;
         }
 
-        private List<int> RecurseGetSteps(List<string> keysObtained, string fromKey)
+        private List<string> GetKeysForFrees(string key1, string key2)
         {
-            if(keysObtained.Count() == allKeys.Count()-1)
-            {
-                var missingKey = allKeys.Keys.First(x => !keysObtained.Contains(x));
-                var sorted = (new List<string>(){fromKey,missingKey}).OrderBy(x=>x).ToList();
-
-                return new List<int>(){stepsFromKeyToKey[sorted[0]][sorted[1]]};
-            }
-
-            var availableKeys = keyRequirements.Where(key =>!keysObtained.Contains(key.Key) &&
-                                                                !key.Value.Any(req => !keysObtained.Contains(req)))
-                                                .Select(key => key.Key);
-            
-            
-            var alpha = String.Join("",availableKeys.OrderBy(x => x).ToList());
-            if(stepsFromKeyToKey[fromKey].ContainsKey(alpha))
-            {
-                return new List<int>(){stepsFromKeyToKey[fromKey][alpha]};
-            }
-            
-            var possibleSteps = new List<int>();
-            foreach(var nextKey in availableKeys)
-            {
-                var keysObtainedCopy = keysObtained.ToList();
-                keysObtainedCopy.Add(nextKey);
-
-                var alphaOrder = (new List<string>(){fromKey,nextKey}).OrderBy(x => x).ToList();
-                possibleSteps.AddRange( RecurseGetSteps(keysObtainedCopy, nextKey).Select(x => x+stepsFromKeyToKey[alphaOrder[0]][alphaOrder[1]]));
-            }
-
-            stepsFromKeyToKey[fromKey].Add(alpha, possibleSteps.Min());
-            return new List<int>(){possibleSteps.Min()};
+            return stepsFromKeyToKey[key1][key2].Item2;
         }
 
-        private List<string> GetDoorList()
-        {
-            var doors = new List<string>();
-            foreach(var row in map)
-            {
-                foreach(var tile in row)
-                {
-                    if(Regex.Match(tile.ToString(),@"[A-Z]").Success)
-                        doors.Add(tile.ToString());
-                }
-            }
-            return doors;
-        }
-
-        private List<string> RecurseGetNumberOfKeyRequirements(string key)
-        {
-            List<string> thisKeyReq = keyRequirements[key].ToList();
-            foreach(var prevKey in keyRequirements[key])
-            {
-                thisKeyReq.AddRange(RecurseGetNumberOfKeyRequirements(prevKey));
-            }
-
-            return thisKeyReq.Distinct().ToList();
-        }
-
-        public bool CurrentPosACorner(int x, int y)
-        {
-            return (map[y-1][x] == '#' &&
-                    map[y][x+1] == '#' &&
-                    map[y][x-1] == '#') ||
-
-                (map[y+1][x] == '#' &&
-                    map[y][x+1] == '#' &&
-                    map[y][x-1] == '#') ||
-
-                (map[y][x-1] == '#' &&
-                    map[y-1][x] == '#' &&
-                    map[y+1][x] == '#') ||
-
-                (map[y][x+1] == '#' &&
-                        map[y-1][x] == '#' &&
-                        map[y+1][x] == '#');
-        }
-
- 
-
-        public List<Tuple<string,int>> GetAvaiableKeys(List<string> keysObtained,string startingKey, int currentSteps, bool stopAtBlockages, bool bigMap)
+        public List<Tuple<string,int,List<string>>> GetAvaiableKeys(List<string> keysObtained,string startingKey, int currentSteps)
         {
             Tuple<int,int> beginHere;
 
             if(startingKey =="@")
                 beginHere = startingPos;
+            else if(startingKey =="0")
+                beginHere = startingPositions[0];
+            else if(startingKey =="1")
+                beginHere = startingPositions[1];
+            else if(startingKey =="2")
+                beginHere = startingPositions[2];
+            else if(startingKey =="3")
+                beginHere = startingPositions[3];
             else
                 beginHere= allKeys[startingKey];
 
             var currPos = new Tuple<int,int>(beginHere.Item1, beginHere.Item2);
             int currDirection = 1;
-            List<Tuple<int,int,int>> thisSteps = new List<Tuple<int, int, int>>(){new Tuple<int, int, int>(currPos.Item1, currPos.Item2, currentSteps)};
-            bool wallFound = false;
-            var visitedStartCount =0;
-            List<Tuple<string,int>> keysFound = new List<Tuple<string, int>>();
+            List<Tuple<int,int,int,List<string>>> thisSteps = new List<Tuple<int, int, int, List<string>>>(){new Tuple<int, int, int,List<string>>(currPos.Item1, currPos.Item2, currentSteps, new List<string>())};
 
-            while(stopAtBlockages? visitedStartCount <= 4: thisSteps.Count()< (startingKey!="@" && bigMap ? totalTiles-1: totalTiles))
+            List<Tuple<string,int,List<string>>> keysFound = new List<Tuple<string, int,List<string>>>();
+            completedTiles.Clear();
+            incompleteTiles.Clear();
+            incompleteTiles.Add(map[beginHere.Item2].Count()*beginHere.Item2 + beginHere.Item1);
+
+            while(incompleteTiles.Any())
             {
                 var goingTo = getNewPos(currPos.Item1, currPos.Item2, currDirection);
                 var pixel = map[goingTo.Item2][goingTo.Item1].ToString();
                 
-                var treatThisAsWall = stopAtBlockages && 
-                                        (Regex.Match(pixel, @"[a-z]").Success && 
-                                            !keysObtained.Contains(pixel) 
-                                        || Regex.Match(pixel, @"[A-Z]").Success && 
-                                            !keysObtained.Contains(pixel.ToLower()));
-
-                if(pixel == "#" || treatThisAsWall)
-                {
-                    wallFound = true;
-                    currDirection = DirToTheRIght(currDirection);
-
-                    if(treatThisAsWall && Regex.Match(pixel, @"[a-z]").Success)
-                    {
-                        var posSteps1 = thisSteps.FirstOrDefault(tile => tile.Item1 == currPos.Item1 && tile.Item2 == currPos.Item2)?.Item3;
-                        if(posSteps1 != null)
-                            keysFound.Add(new Tuple<string,int>(pixel, posSteps1.Value+1));
-                    }
-
-                }
-                else
+                if(pixel != "#")
                 {
                     var newPos = goingTo;
 
+                    var pixIndex = goingTo.Item1+map[0].Count()*goingTo.Item2;
+                    if(!completedTiles.Contains(pixIndex) && !incompleteTiles.Contains(pixIndex))
+                        incompleteTiles.Add(pixIndex);
                     if(!thisSteps.Any(tile => tile.Item1 == newPos.Item1 && tile.Item2 == newPos.Item2))
                     {
-                        var posSteps1 = thisSteps.FirstOrDefault(tile => tile.Item1 == currPos.Item1 && tile.Item2 == currPos.Item2)?.Item3;
+                        var posSteps1 = thisSteps.FirstOrDefault(tile => tile.Item1 == currPos.Item1 && tile.Item2 == currPos.Item2);
                         if(posSteps1 != null)
                         {
-                            thisSteps.Add(new Tuple<int, int, int>(newPos.Item1, newPos.Item2, posSteps1.Value+1));
-
-                            if(Regex.Match(pixel, @"[a-z]").Success && !keysObtained.Any(p => p==pixel))
+                            var currentKeys = posSteps1.Item4.ToList();
+                            
+                            if(Regex.Match(pixel, @"[a-z]").Success)
                             {
-                                keysFound.Add(new Tuple<string,int>(pixel, posSteps1.Value+1));
+                                if(!keysObtained.Any(p => p==pixel))
+                                {
+                                    keysFound.Add(new Tuple<string,int,List<string>>(pixel, posSteps1.Item3+1,currentKeys));
+                                }
+                                currentKeys.Add(pixel);
                             }
+
+                            thisSteps.Add(new Tuple<int, int, int,List<string>>(newPos.Item1, newPos.Item2, posSteps1.Item3+1,currentKeys));
                         }
-                    }
-
-                    currPos = newPos;
-                    if(wallFound)
-                        currDirection = DirToTheLeft(currDirection);
-
-                    if(tileComplete(thisSteps, currPos.Item1, currPos.Item2))
-                    {
-                        var temp = GetFirstIncompleteTile(thisSteps);
-                        currPos = new Tuple<int, int>(temp.Item1, temp.Item2);
                     }
                 }
 
-                if(stopAtBlockages&& currPos.Item1 == beginHere.Item1 && currPos.Item2 == beginHere.Item2)
-                    visitedStartCount++;
+                var temp = GetFirstIncompleteTile();
+                currPos = new Tuple<int, int>(temp.Item1, temp.Item2);
+                currDirection  = temp.Item3;
+
             }
             return keysFound;
         }
 
-        public bool tileComplete(List<Tuple<int,int,int>> steps, int tileX, int tileY)
+        public Tuple<int,int,int> GetFirstIncompleteTile()
         {
-            var x = new List<int>(){tileX, tileX, tileX+1, tileX-1};
-            var y = new List<int>(){tileY+1, tileY-1, tileY, tileY};
-
-            for(int i =0; i< x.Count(); i++)
+            var copy = incompleteTiles.ToList();
+            var width = map[0].Count();
+            var neighbors = new List<int>();
+            foreach(var tileIndex in copy)
             {
-                if(map[y[i]][x[i]] != '#'  || !steps.Any(s => s.Item1== x[i] && s.Item2 == y[i]))
+                neighbors.Clear();
+                neighbors.Add(tileIndex-width); //North
+                neighbors.Add(tileIndex+width); //South
+                neighbors.Add(tileIndex-1); //West
+                neighbors.Add(tileIndex+1); //East
+
+                for(int i = 0; i < neighbors.Count(); i++)
                 {
-                    return false;
+                    var neighborIndex = neighbors[i];
+                    var row = neighborIndex/width;
+                    var col = neighborIndex%width;
+                    if(map[row][col] != '#' && !completedTiles.Contains(neighborIndex)&&!incompleteTiles.Contains(neighborIndex))
+                    {
+                        return new Tuple<int, int, int>(tileIndex%width,tileIndex/width,i+1);
+                    }
+
                 }
+                completedTiles.Add(tileIndex);
+                incompleteTiles.Remove(tileIndex);
             }
+            
 
-            return true;
-        }
-
-        public Tuple<int,int,int> GetFirstIncompleteTile(List<Tuple<int,int,int>> steps)
-        {
-            return steps.FirstOrDefault(s => !tileComplete(steps, s.Item1, s.Item2));
+            return new Tuple<int, int, int>(0, 0, 0);
         }
 
         public int DirToTheRIght(int currDirection)
@@ -537,10 +487,10 @@ namespace Advent
             switch(currDir)
             {
                 case 1: //north
-                    currY += 1;
+                    currY -= 1;
                     break;
                 case 2: //south
-                    currY -= 1;
+                    currY += 1;
                     break;
                 case 3: //west
                     currX -= 1;

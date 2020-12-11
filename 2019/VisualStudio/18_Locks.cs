@@ -10,7 +10,6 @@ namespace Advent
         List<string> map;
         Dictionary<string,List<string>> keyRequirements = new Dictionary<string, List<string>>();
         
-        Dictionary<string,List<string>> keyRequirementsRecursive = new Dictionary<string, List<string>>();
             
         Tuple<int,int> startingPos;
         List<Tuple<int,int>> startingPositions = new List<Tuple<int, int>>();
@@ -18,8 +17,6 @@ namespace Advent
         Dictionary<string, Tuple<int,int>> allKeys = new Dictionary<string, Tuple<int,int>>();
         int totalTiles;
 
-        Dictionary<string,List<List<string>>> combos = new Dictionary<string, List<List<string>>>();
-        Dictionary<string,List<string>> textComboCache = new Dictionary<string, List<string>>();
         Dictionary<string, Dictionary<string,Tuple<int,List<string>>>> stepsFromKeyToKey = new Dictionary<string, Dictionary<string, Tuple<int, List<string>>>>();
         Dictionary<string, Dictionary<string,int>> bottomUpCombos = new Dictionary<string, Dictionary<string, int>>();
         List<int> completedTiles = new List<int>();
@@ -95,12 +92,9 @@ namespace Advent
         public void FindMinSteps()
         {
             List<string> keysObtained = new List<string>();
-            var minStep = Int32.MaxValue;
             keyRequirements.Clear();
             stepsFromKeyToKey.Clear();
             GetAllKeyRequirements(map);
-
-            var bigMap = true;
 
             var sortedKeys = allKeys.Keys.OrderBy(x =>x).ToList();
             for(int i =0; i< sortedKeys.Count(); i++)
@@ -111,10 +105,8 @@ namespace Advent
             }
             Console.WriteLine("Getting Steps for @");
             stepsFromKeyToKey["@"] = GetAvaiableKeys(new List<string>(){"@"}, "@",0).ToDictionary(x=> x.Item1, x=> new Tuple<int, List<string>>(x.Item2,x.Item3));
-            
-            textComboCache.Clear();
+
             bottomUpCombos.Clear();
-            
             var steps = RecurseBottomUpApproach("@", String.Join("",allKeys.Keys.Where(x => x!="@").OrderBy(x=>keyRequirements[x].Count).Reverse().ToList()));
 
             Console.WriteLine("Minimum Steps: " + steps);
@@ -136,7 +128,6 @@ namespace Advent
                 stepsFromKeyToKey[String.Format("{0}",i)] = GetAvaiableKeys(new List<string>(){String.Format("{0}",i)}, i.ToString() ,0).ToDictionary(x=> x.Item1, x=> new Tuple<int, List<string>>(x.Item2,x.Item3));
             }
 
-            textComboCache.Clear();
             bottomUpCombos.Clear();
             var steps4Robot = new List<int?>();
             for (int i = 0; i < 4; i++)
@@ -150,7 +141,6 @@ namespace Advent
             steps4Robot = new List<int?>();
             for (int i = 0; i < 4; i++)
             {
-                textComboCache.Clear();
                 bottomUpCombos.Clear();                
                 steps4Robot.Add(RecurseBottomUp4Robots("0","1","2","3",String.Join("",allKeys.Keys.Where(x => x!="@").OrderBy(x=>keyRequirements[x].Count).Reverse().ToList())));  
             }            

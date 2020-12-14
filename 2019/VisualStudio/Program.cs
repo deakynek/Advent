@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 18;
+            int day = 20;
             var lines = (System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day))).ToList<string>();
 
 
@@ -127,7 +127,13 @@ namespace Advent
                 case 18:
                     var lockMap = new Locks(lines);
                     lockMap.FindMinSteps();
-                    break;                   
+                    break;
+                case 19:
+                    var tractor = new TractorBeam(lines);
+                    break;
+                case 20:
+                    var maze = new Maze(lines);
+                    break;       
                 default:
                     break;
             }

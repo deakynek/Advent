@@ -7,19 +7,19 @@ namespace Advent
 {
     class SumFinder
     {
-        List<int> entries;
+        List<long> entries;
 
         public SumFinder(List<string> lines)
         {
-            entries = lines.Select(line => Int32.Parse(line)).ToList<int>();
+            entries = lines.Select(line => Int64.Parse(line)).ToList();
         }
 
-        public SumFinder(List<int> entries)
+        public SumFinder(List<long> entries)
         {
             this.entries = entries;
         }
 
-        public List<int> FindSumWithNNumbers(int sum, int n)
+        public List<long> FindSumWithNNumbers(long sum, int n)
         {
             if(entries == null || !entries.Any())
                 return null;
@@ -28,13 +28,13 @@ namespace Advent
             return numbers;
         }
 
-        private List<int> RecurseFindSum(int remainingSum,  int n, int startingIndex, int currentDepth)
+        private List<long> RecurseFindSum(long remainingSum,  int n, int startingIndex, int currentDepth)
         {
             if(remainingSum <= 0)
                 return null;
 
             var index = 0;
-            foreach(int entry in entries.Skip(startingIndex))
+            foreach(long entry in entries.Skip(startingIndex))
             {
                 if(currentDepth != n-1)
                 {
@@ -54,7 +54,7 @@ namespace Advent
                 {
                     if(entry == remainingSum)
                     {
-                        return new List<int>(){entry};
+                        return new List<long>(){entry};
                     }
                 }
 

@@ -29,6 +29,19 @@ namespace Advent
         {
             return (a / getGCD(a, b)) * b;
         }
+
+        public static double getGCD(double a, double b)
+        {
+            if (a == 0)
+                return b;
+            return getGCD(b % a, a);
+        }
+
+        public static double getLCM(double a, double b)
+        {
+            return (a / getGCD(a, b)) * b;
+        }
+
     }
 
 }

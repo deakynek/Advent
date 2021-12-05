@@ -14,8 +14,11 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day = 20;
-            var lines = (System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day))).ToList<string>();
+            int day = 22;
+
+            var lines = new List<string>();
+            if(day!= 1000)
+                lines = (System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day))).ToList<string>();
 
 
             switch(day)
@@ -133,7 +136,48 @@ namespace Advent
                     break;
                 case 20:
                     var maze = new Maze(lines);
+                    break;
+                case 21:
+                    var jumper = new Jumper(lines);
+                    break;
+                case 22:
+                    var dexk = new DeckSorter(lines);
+                    break;
+                
+                case 101:
+                    var elf = new ElfGame(lines);
                     break;       
+                case 117:
+                    var day17 = new Day17(lines);
+                    break; 
+                          
+                case 118:
+                    var day18 = new Day18(lines);
+                    break; 
+                case 119:
+                    var day19 = new Day19(lines);
+                    break; 
+                case 120:
+                    var day20 = new Day20(lines);
+                    break; 
+                case 121:
+                    var day21 = new Day21(lines);
+                    break; 
+                case 122:
+                    var day22 = new Day22(lines);
+                    break; 
+                case 123:
+                    var day23 = new Day23(lines);
+                    break; 
+                case 124:
+                    var day24 = new Day24(lines);
+                    break;
+                case 125:
+                    var day25 = new Day25(lines);
+                    break; 
+                case 1000:
+                    var WebCrawler = new WebCrawler();
+                    break;
                 default:
                     break;
             }

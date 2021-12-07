@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day =4;
+            int day =7;
             var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day)).ToList<string>();
 
             switch(day)
@@ -32,7 +32,15 @@ namespace Advent
                     break;
                 case 4:
                     var day4 = new Bingo(lines);
-                
+                    break;
+                case 5:
+                    var day5 = new Vents(lines);
+                    break;
+                case 6:
+                    var day6 = new GrowthRate(lines);
+                    break;
+                case 7:
+                    var day7 = new SubAlignment(lines);
                     break;
                 default:
                     break;

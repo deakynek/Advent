@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day =7;
+            int day =8;
             var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day)).ToList<string>();
 
             switch(day)
@@ -41,6 +41,9 @@ namespace Advent
                     break;
                 case 7:
                     var day7 = new SubAlignment(lines);
+                    break;
+                case 8:
+                    var day8 = new SevenSegDisplay(lines);
                     break;
                 default:
                     break;

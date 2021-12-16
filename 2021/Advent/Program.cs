@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day =9;
+            int day =15;
             var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day)).ToList<string>();
 
             switch(day)
@@ -47,6 +47,54 @@ namespace Advent
                     break;
                 case 9:
                     var day9 = new SmokeBasin(lines);
+                    break;
+                case 10:
+                    var day10 = new Brackets(lines);
+                    break;
+                case 11:
+                    var day11 = new OctoFlash(lines);
+                    break;
+                case 12:
+                    var day12 = new CavePaths(lines);
+                    break;
+                case 13:
+                    var day13 = new Folding(lines);
+                    break;
+                case 14:
+                    var day14 = new Polymers(lines);
+                    break;
+                case 15:
+                    var day15 = new RiskAssessment(lines);
+                    break;
+                case 16:
+                    var day16 = new Temp16(lines);
+                    break;
+                case 17:
+                    var day17 = new Temp17(lines);
+                    break;
+                case 18:
+                    var day18 = new Temp18(lines);
+                    break;
+                case 19:
+                    var day19 = new Temp19(lines);
+                    break;
+                case 20:
+                    var day20 = new Temp20(lines);
+                    break;
+                case 21:
+                    var day21= new Temp21(lines);
+                    break;
+                case 22:
+                    var day22 = new Temp22(lines);
+                    break;
+                case 23:
+                    var day23 = new Temp23(lines);
+                    break;
+                case 24:
+                    var day24 = new Temp24(lines);
+                    break;
+                case 25:
+                    var day25 = new Temp25(lines);
                     break;
                 default:
                     break;

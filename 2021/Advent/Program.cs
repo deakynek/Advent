@@ -14,7 +14,7 @@ namespace Advent
         static void Main(string[] args)
         {
 
-            int day =15;
+            int day =20;
             var lines = System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt",day)).ToList<string>();
 
             switch(day)
@@ -67,19 +67,19 @@ namespace Advent
                     var day15 = new RiskAssessment(lines);
                     break;
                 case 16:
-                    var day16 = new Temp16(lines);
+                    var day16 = new BinaryOperators(lines);
                     break;
                 case 17:
-                    var day17 = new Temp17(lines);
+                    var day17 = new ProbeLauching(lines);
                     break;
                 case 18:
-                    var day18 = new Temp18(lines);
+                    var day18 = new SnailMath(lines);
                     break;
                 case 19:
-                    var day19 = new Temp19(lines);
+                    var day19 = new SensorTracking(lines);
                     break;
                 case 20:
-                    var day20 = new Temp20(lines);
+                    var day20 = new TrenchMap(lines);
                     break;
                 case 21:
                     var day21= new Temp21(lines);

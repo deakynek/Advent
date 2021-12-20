@@ -235,6 +235,7 @@ namespace Advent
         public bool rightComplete = false;
 
         public int Ident = 0;
+
         public Tuple<int,int> pos = new Tuple<int, int>(0,0);
         public square(int x,int y, int ident)
         {
@@ -252,6 +253,14 @@ namespace Advent
             downComplete = true;
             leftComplete = true;
             rightComplete = true;
+        }
+
+        public void ResetComplete()
+        {
+            upComplete = false;
+            downComplete = false;
+            leftComplete = false;
+            rightComplete = false;
         }
 
     }

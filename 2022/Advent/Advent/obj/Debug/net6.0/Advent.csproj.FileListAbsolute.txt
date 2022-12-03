@@ -1,0 +1,15 @@
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\obj\Debug\net6.0\Advent.csproj.AssemblyReference.cache
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\obj\Debug\net6.0\Advent.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\obj\Debug\net6.0\Advent.AssemblyInfoInputs.cache
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\obj\Debug\net6.0\Advent.AssemblyInfo.cs
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\obj\Debug\net6.0\Advent.csproj.CoreCompileInputs.cache
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\bin\Debug\net6.0\Advent.exe
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\bin\Debug\net6.0\Advent.deps.json
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\bin\Debug\net6.0\Advent.runtimeconfig.json
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\bin\Debug\net6.0\Advent.dll
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\bin\Debug\net6.0\Advent.pdb
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\obj\Debug\net6.0\Advent.dll
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\obj\Debug\net6.0\refint\Advent.dll
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\obj\Debug\net6.0\Advent.pdb
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\obj\Debug\net6.0\Advent.genruntimeconfig.cache
+C:\Users\deaky\OneDrive\Documents\Advent\2022\Advent\Advent\obj\Debug\net6.0\ref\Advent.dll

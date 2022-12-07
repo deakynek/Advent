@@ -13,22 +13,45 @@ namespace Advent
     {
         static void Main(string[] args)
         {
+            
+            int day = 7;
 
-            int day = 2;
-            var lines = (System.IO.File.ReadAllLines(String.Format(@".\Advent{0}Input.txt", day.ToString("00")))).ToList<string>();
-
-
-            switch (day)
+            for (var i = day; i <= day; i++)
             {
-                case 1:
-                    var day1 = new JungleFood(lines);
-                    break;
-                case 2:
-                    var day2 = new RockPaperSissors(lines);
-                    break;
-                    
-                default:
-                    break;
+                Console.WriteLine("Day {0}", i);
+
+                var start = DateTime.Now;
+                var lines = (System.IO.File.ReadAllLines(String.Format(@"..\..\..\Advent{0}Input.txt", i.ToString("00")))).ToList<string>();
+
+                switch (i)
+                {
+                    case 1:
+                        var day1 = new JungleFood(lines);
+                        break;
+                    case 2:
+                        var day2 = new RockPaperSissors(lines);
+                        break;
+                    case 3:
+                        var day3 = new Packing(lines);
+                        break;
+                    case 4:
+                        var day4 = new Cleaning(lines);
+                        break;
+                    case 5:
+                        var day5 = new CraneOps(lines);
+                        break;
+                    case 6:
+                        var day6 = new Radios(lines);
+                        break;
+                    case 7:
+                        var day7 = new FileSys(lines);
+                        break;
+                    default:
+                        break;
+                }
+
+                PrintElapsedTime(String.Format("Day {0} running both days", i), start);
+                Console.WriteLine();
             }
         }
 

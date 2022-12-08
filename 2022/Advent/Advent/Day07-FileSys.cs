@@ -10,18 +10,18 @@ namespace Advent
     internal class FileSys
     {
         Dictionary<string, Tuple<List<string>, List<Int64>>> dirs = new Dictionary<string, Tuple<List<string>, List<long>>>();
-            
-        public FileSys(List<string> inputs) 
+
+        public FileSys(List<string> inputs)
         {
             bool lsOp = false;
             List<string> currDirs = new List<string>();
             currDirs.Add("/");
-            
+
             var blank = new Tuple<List<string>, List<long>>(new List<string>(), new List<long>());
             dirs.Add(currDirs.First(), blank);
 
 
-            for (int i = 0; i < inputs.Count; i++) 
+            for (int i = 0; i < inputs.Count; i++)
             {
                 var parsedIn = inputs[i].Split(' ').ToList();
 
@@ -29,7 +29,7 @@ namespace Advent
                 {
                     lsOp = false;
 
-                    if(parsedIn.ElementAt(1) == "cd")
+                    if (parsedIn.ElementAt(1) == "cd")
                     {
                         if (parsedIn.ElementAt(2) == "/")
                         {
@@ -47,58 +47,58 @@ namespace Advent
                         currDirs.Add(parsedIn.ElementAt(2));
                         continue;
                     }
-                    else if(parsedIn.ElementAt(1) == "ls")
+                    else if (parsedIn.ElementAt(1) == "ls")
                     {
-                        lsOp= true;
+                        lsOp = true;
                         continue;
                     }
                 }
 
                 if (!lsOp)
                     continue;
-                
-                if(parsedIn.First() == "dir")
+
+                if (parsedIn.First() == "dir")
                 {
                     if (!dirs.ContainsKey(parsedIn.ElementAt(1)))
                     {
                         blank = new Tuple<List<string>, List<long>>(new List<string>(), new List<long>());
-                        dirs.Add(parsedIn.ElementAt(1), blank);
+                        var copy = currDirs.ToList();
+                        copy.Add(parsedIn.ElementAt(1));
+                        dirs.Add(String.Join(' ',copy), blank);
                     }
-                    dirs[currDirs.Last()].Item1.Add(parsedIn.ElementAt(1));
+                    dirs[String.Join(' ',currDirs)].Item1.Add(parsedIn.ElementAt(1));
                 }
                 else
                 {
-                    dirs[currDirs.Last()].Item2.Add(Int64.Parse(parsedIn.ElementAt(0)));
+                    dirs[String.Join(' ', currDirs)].Item2.Add(Int64.Parse(parsedIn.ElementAt(0)));
                 }
             }
 
             var size = new Dictionary<string, long>();
-            RecurseGetDirSum("/", size);
-            var sum = size.Where(x => x.Value <= 100000).Sum(x=>x.Value);
+            FillSize(size);
+            var sum = size.Where(x => x.Value <= 100000).Sum(x => x.Value);
 
-            Console.WriteLine(String.Format("Part 1: Tot of all dirs <= 100000 {0}",sum));
+            Console.WriteLine(String.Format("Part 1: Tot of all dirs <= 100000 \t= {0}", sum));
+
+            var remSize = 30000000 - (70000000 - size["/"]);
+            var delSize = size.Values.Where(x => x >= remSize).OrderBy(x => x).First();
+            Console.WriteLine(String.Format("Part 2: Size of smallest dir to delete \t= {0}", delSize));
         }
 
-        public void RecurseGetDirSum(string currDir,Dictionary<string, long> size)
+
+        public void FillSize(Dictionary<string, long> size)
         {
-            if (!dirs.ContainsKey(currDir)||size.ContainsKey(currDir))
-                return;
-
-
-            var currDirBase = dirs[currDir].Item2.Sum();
-            long other = 0;
-            foreach(var dir in dirs[currDir].Item1)
+            foreach(var dir in dirs.Keys.OrderByDescending(x=>x.Length))
             {
-                if (size.ContainsKey(dir))
-                    other += size[dir];
-                else
-                { 
-                    RecurseGetDirSum(dir, size);
-                    other += size[dir];
+                long memSize= dirs[dir].Item2.Sum();
+
+                foreach(var d in dirs[dir].Item1)
+                {
+                    memSize += size[dir+" "+d];
                 }
+                size.Add(dir, memSize);
             }
 
-            size.Add(currDir, currDirBase + other);
         }
     }
 }

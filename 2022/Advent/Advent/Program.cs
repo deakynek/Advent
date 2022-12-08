@@ -16,7 +16,7 @@ namespace Advent
             
             int day = 7;
 
-            for (var i = day; i <= day; i++)
+            for (var i = 1; i <= day; i++)
             {
                 Console.WriteLine("Day {0}", i);
 

@@ -16,7 +16,7 @@ namespace Advent
             
             int day = 9;
 
-            for (var i = day; i <= day; i++)
+            for (var i = 1; i <= day; i++)
             {
                 Console.WriteLine("Day {0}", i);
 
@@ -50,7 +50,7 @@ namespace Advent
                         var day8 = new TreeHouse(lines);
                         break;
                     case 9:
-                        var day9 = new Day9(lines);
+                        var day9 = new Ropes(lines);
                         break;
                     default:
                         break;

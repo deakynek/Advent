@@ -12,65 +12,16 @@ namespace Advent
 
         public Ropes(List<string> input)
         {
-            var HPos = new List<int>();
-            HPos.Add(0);
-            HPos.Add(0);
-            var TPos = new List<int>();
-            TPos.Add(0);
-            TPos.Add(0);
-            THist.Add(0, new List<int>());
+            RopeTrick(input, 2, "Part 1");
+            RopeTrick(input, 10, "Part 2");
+        }
 
-            foreach (var command in input)
-            {
-                var parsed = command.Split(' ');
-                var ammount = int.Parse(parsed[1]);
-
-                for (int i = 0; i < ammount; i++)
-                {
-                    if (parsed[0] == "U")
-                        HPos[0] += 1;
-                    else if (parsed[0] == "D")
-                        HPos[0] -= 1;
-                    else if (parsed[0] == "R")
-                        HPos[1] += 1;
-                    else if (parsed[0] == "L")
-                        HPos[1] -= 1;
-
-                    if (Math.Abs(TPos[0] - HPos[0]) > 1 ||
-                        Math.Abs(TPos[1] - HPos[1]) > 1)
-                    {
-                        if (Math.Abs(TPos[0] - HPos[0]) < Math.Abs(TPos[1] - HPos[1]))
-                        {
-                            TPos[0] = HPos[0];
-                            if (parsed[0] == "R")
-                                TPos[1] = HPos[1] - 1;
-                            else if (parsed[0] == "L")
-                                TPos[1] = HPos[1] + 1;
-                        }
-                        else
-                        {
-                            TPos[1] = HPos[1];
-                            if (parsed[0] == "U")
-                                TPos[0] = HPos[0] - 1;
-                            else if (parsed[0] == "D")
-                                TPos[0] = HPos[0] + 1;
-                        }
-                    }
-
-                    if (!THist.ContainsKey(TPos[0]))
-                        THist.Add(TPos[0], new List<int>());
-                    if (!THist[TPos[0]].Contains(TPos[1]))
-                        THist[TPos[0]].Add(TPos[1]);
-                }
-            }
-            var sum = THist.Select(x => x.Value.Count()).Sum();
-            Console.WriteLine(String.Format("Part 1: Distinct Tail Pos Count = {0}", sum));
-
-
+        private void RopeTrick(List<string>input,int knotsCount, string logheader)
+        {
             THist.Clear();
             THist.Add(0, new List<int>());
             List<List<int>> allKnots = new List<List<int>>();
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < knotsCount; i++)
             {
                 allKnots.Add(new List<int>() { 0, 0 });
             }
@@ -104,10 +55,8 @@ namespace Advent
                 }
             }
 
-            sum = THist.Select(x => x.Value.Count()).Sum();
-            Console.WriteLine(String.Format("Part 2: Distinct Tail Pos Count = {0}", sum));
-
-
+            var sum = THist.Select(x => x.Value.Count()).Sum();
+            Console.WriteLine(String.Format("Part {0}: Distinct Tail Pos Count = {1}",logheader, sum));
         }
 
         private List<int> GetNewPos(List<int> hknot, List<int> tknot)

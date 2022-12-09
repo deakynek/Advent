@@ -14,9 +14,9 @@ namespace Advent
         static void Main(string[] args)
         {
             
-            int day = 7;
+            int day = 9;
 
-            for (var i = 1; i <= day; i++)
+            for (var i = day; i <= day; i++)
             {
                 Console.WriteLine("Day {0}", i);
 
@@ -45,6 +45,12 @@ namespace Advent
                         break;
                     case 7:
                         var day7 = new FileSys(lines);
+                        break;
+                    case 8:
+                        var day8 = new TreeHouse(lines);
+                        break;
+                    case 9:
+                        var day9 = new Day9(lines);
                         break;
                     default:
                         break;

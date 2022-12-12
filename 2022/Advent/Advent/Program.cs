@@ -5,6 +5,7 @@ using System.Text;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Collections;
 
 
 namespace Advent
@@ -14,7 +15,8 @@ namespace Advent
         static void Main(string[] args)
         {
             
-            int day = 9;
+            int day = 11;
+            var totStart = DateTime.Now;
 
             for (var i = 1; i <= day; i++)
             {
@@ -52,6 +54,12 @@ namespace Advent
                     case 9:
                         var day9 = new Ropes(lines);
                         break;
+                    case 10:
+                        var day10 = new CPU(lines);
+                        break;
+                    case 11:
+                        var day11 = new MonkeyInTheMiddle(lines);
+                        break;
                     default:
                         break;
                 }
@@ -59,6 +67,8 @@ namespace Advent
                 PrintElapsedTime(String.Format("Day {0} running both days", i), start);
                 Console.WriteLine();
             }
+
+            PrintElapsedTime("Total of all days run", totStart);
         }
 
         static private void PrintElapsedTime(string operation, DateTime start)
